@@ -34,6 +34,10 @@ interface ICrvVoting {
     function withdraw() external;
 }
 
+interface IUniswap {
+    function swapExactTokensForTokens(uint, uint, address[] calldata, address, uint) external;
+}
+
 contract Context {
     constructor () internal { }
     // solhint-disable-previous-line no-empty-blocks
@@ -292,89 +296,104 @@ library SafeERC20 {
 }
 
 contract yyCRV is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
-  using SafeERC20 for IERC20;
-  using Address for address;
-  using SafeMath for uint256;
+    using SafeERC20 for IERC20;
+    using Address for address;
+    using SafeMath for uint256;
 
-  uint256 public pool;
+    uint256 public pool;
+    uint8 public maximum_mining_ratio;
+    uint8 public minimum_mining_ratio;    
 
-    IERC20 constant public yCrv = IERC20(0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8); // yCrv
+    IERC20 constant public yCrv = IERC20(0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8);
+    IERC20 constant public y3d = IERC20(0xc7fD9aE2cf8542D71186877e21107E1F3A0b55ef);
     IERC20 constant public CRV = IERC20(0xD533a949740bb3306d119CC777fa900bA034cd52);
+    address constant public WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     address constant public crv_deposit = address(0xFA712EE4788C042e2B7BB55E6cb8ec569C4530c1);
-    address constant public crv_minter = address(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0);        
+    address constant public crv_minter = address(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0);
+    address constant public uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     ICrvVoting constant public crv_voting = ICrvVoting(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
-    address public crv_manager = address(0x6465F1250c9fe162602Db83791Fc3Fb202D70a7B);
+    address public crv_consul = address(0x6465F1250c9fe162602Db83791Fc3Fb202D70a7B);
 
-  constructor () public {
-    pool = 1; // avoid div by 1
-    _mint(msg.sender, 1);
-    //approveToken();
-  }
+    constructor () public {
+        pool = 1; _mint(msg.sender, 1); // avoid div by 1
+        yCrv.approve(crv_deposit, uint(-1));
+        maximum_mining_ratio = 95;
+        minimum_mining_ratio = 70;
+    }
 
-  function() external payable {
-  }
+    function() external payable {
+    }
 
-  function approveToken() public {
- //     IERC20(token).approve(cDAI, uint(-1));
-  }
-
-  // Invest yCrv
-  function invest(uint256 _amount)
-      external
-      nonReentrant
-  {
-    require(_amount > 0, "deposit must be greater than 0");
-    yCrv.transferFrom(msg.sender, address(this), _amount);
-    // invariant: shares/totalSupply = amount/pool
-    uint256 shares = (_amount.mul(_totalSupply)).div(pool);
-    pool += _amount;
-    _mint(msg.sender, shares); 
-  }
-
-  // Invest self eth from yCrv
-  function investSelf(uint256 _amount)
-      external
-      nonReentrant
-      onlyOwner
-  {
+    // Invest yCrv
+    function invest(uint256 _amount) external {
         require(_amount > 0, "deposit must be greater than 0");
         yCrv.transferFrom(msg.sender, address(this), _amount);
+        // invariant: shares/totalSupply = amount/pool
+        uint256 shares = (_amount.mul(_totalSupply)).div(pool);
         pool += _amount;
-  }
+        _mint(msg.sender, shares); 
+    }
 
-  function invest() internal {
-      ICrvDeposit(crv_deposit).deposit(token.balanceOf(address(this)));
-  }
+    function make_profit_internal(uint256 _amount) internal {
+        require(_amount > 0, "deposit must be greater than 0");
+        pool += _amount;
+    }    
 
-  function harvest() internal {
-        ICrvMinter(crv_minter).mint_for(crv_deposit, crv_manager);
-  }
+    function make_profit_external(uint256 _amount) public {
+        make_profit_internal(_amount);
+        yCrv.transferFrom(msg.sender, address(this), _amount);
+    }
 
-  function withdraw(uint256 _amount) internal {
-    ICrvDeposit(crv_deposit).withdraw(_amount);
-  }
+    function deposit_all() external {
+        require(y3d.balanceOf(address(msg.sender)) >= 1e16, "0.01 y3d requirement");
+        ICrvDeposit(crv_deposit).deposit(yCrv.balanceOf(address(this)));
+    }
 
-  // Redeem any invested tokens from the pool
-  function redeem(uint256 _shares)
-      external
-      nonReentrant
-  {
+    function deposit() external {
+        require(y3d.balanceOf(address(msg.sender)) >= 1e15, "0.001 y3d requirement");
+        uint a = yCrv.balanceOf(address(this));
+        uint b = ICrvDeposit(crv_deposit).balanceOf(address(this));
+        uint t = a + b; t = t.mul(maximum_mining_ratio).div(100);
+        require (t > b, "enough miners");
+        if (t > b) ICrvDeposit(crv_deposit).deposit(t - b);        
+    }
+
+    function harvest_to_consul() external {
+        ICrvMinter(crv_minter).mint_for(crv_deposit, crv_consul);
+    }
+
+    function harvest_to_uniswap() external {
+        require(y3d.balanceOf(address(msg.sender)) >= 1e17, "0.1 y3d requirement");
+
+        ICrvMinter(crv_minter).mint(crv_deposit);
+        uint _crv = CRV.balanceOf(address(this));
+        uint yCrv_before_swap = yCrv.balanceOf(address(this));
+
+        require(_crv > 0, "no enough Crv to be swap");
+
+        CRV.safeApprove(uniswap, 0);
+        CRV.safeApprove(uniswap, _crv);            
+        address[] memory path = new address[](3);
+        path[0] = 0xD533a949740bb3306d119CC777fa900bA034cd52; // CRV
+        path[1] = WETH;
+        path[2] = 0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8; //yCrv;      
+        IUniswap(uniswap).swapExactTokensForTokens(_crv, uint(0), path, address(this), now.add(1800));
+
+        uint yCrv_delta = yCrv.balanceOf(address(this)).sub(yCrv_before_swap);
+        make_profit_internal(yCrv_delta);        
+    }
+
+    function withdraw(uint256 _amount) internal {
+        ICrvDeposit(crv_deposit).withdraw(_amount);
+    }
+
+    // Redeem any invested tokens from the pool
+    function redeem(uint256 _shares) external nonReentrant {
         // invariant: shres/totalSupply = amount/pool
         uint256 _amount = (pool.mul(_shares)).div(_totalSupply);
         _burn(msg.sender, _shares);
         uint256 b = yCrv.balanceOf(address(this));
         if (b < _amount) withdraw(_amount - b);    
         yCrv.transfer(msg.sender, _amount);
-  }
-
-  // incase of half-way error
-  function inCaseTokenGetsStuck(IERC20 _TokenAddress) onlyOwner public {
-      uint qty = _TokenAddress.balanceOf(address(this));
-      _TokenAddress.transfer(msg.sender, qty);
-  }
-  // incase of half-way error
-  function inCaseETHGetsStuck() onlyOwner public{
-      (bool result, ) = msg.sender.call.value(address(this).balance)("");
-      require(result, "transfer of ETH failed");
-  }
+    }
 }
