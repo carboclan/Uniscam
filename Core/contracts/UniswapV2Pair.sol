@@ -26,6 +26,8 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
     uint public price0CumulativeLast;
     uint public price1CumulativeLast;
     uint public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
+    uint8 public swap_fee;
+
 
     uint private unlocked = 1;
     modifier lock() {
@@ -69,6 +71,7 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
         token1 = _token1;
         name = string(abi.encodePacked('PonziSwap Liquidity Token ', IERC20(token0).name(), '-', IERC20(token1).name()));
         symbol = string(abi.encodePacked('PST ', IERC20(token0).name(), '-', IERC20(token1).name()));
+        swap_fee = 3;
     }
 
     // update reserves and, on the first call per block, price accumulators
@@ -182,8 +185,8 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
         uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
         require(amount0In > 0 || amount1In > 0, 'UniswapV2: INSUFFICIENT_INPUT_AMOUNT');
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
-        uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(3));
-        uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(3));
+        uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(swap_fee));
+        uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(swap_fee));
         require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UniswapV2: K');
         }
 
