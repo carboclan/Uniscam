@@ -3,7 +3,8 @@
 */
 
 pragma solidity ^0.5.17;
-// pragma experimental ABIEncoderV2;
+
+pragma experimental ABIEncoderV2;
 
 interface IERC20 {
     function totalSupply() external view returns (uint256);
@@ -295,7 +296,7 @@ library SafeERC20 {
     }
 }
 
-contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
+contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
@@ -304,7 +305,7 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     uint8 public maximum_mining_ratio;
     uint8 public minimum_mining_ratio;    
 
-    IERC20 constant public yCrv = IERC20(0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8);
+    IERC20 constant public yCrv = IERC20(0xc778417E063141139Fce010982780140Aa0cD5Ab);  //IERC20(0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8);
     IERC20 constant public y3d = IERC20(0xc7fD9aE2cf8542D71186877e21107E1F3A0b55ef);
     IERC20 constant public CRV = IERC20(0xD533a949740bb3306d119CC777fa900bA034cd52);
     address constant public WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
@@ -314,10 +315,16 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     ICrvVoting constant public crv_voting = ICrvVoting(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
     address public crv_consul = address(0x6465F1250c9fe162602Db83791Fc3Fb202D70a7B);
 
+    // Anti-front running fee
+    uint16 public _default_fees = 100; // 10%
+    mapping (address => uint16) _fees;
+    mapping (address => uint) _stake_timestamp;
+    uint public _fees_duration = 30 days;
+
     constructor () public {
         pool = 1; _mint(msg.sender, 1); // avoid div by 1
         yCrv.approve(crv_deposit, uint(-1));
-        CRV.approve(crv_consul, uint(-1));        
+//        CRV.approve(crv_consul, uint(-1));        
         maximum_mining_ratio = 95;
         minimum_mining_ratio = 70;
     }
@@ -325,24 +332,33 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     function() external payable {
     }
 
-    // Invest yCrv
-    function invest(uint256 _amount) external {
+    function fee(address account) public view returns (uint) {
+        if (_fees[account] == uint16(-1)) return 0;
+        uint t = block.timestamp - _stake_timestamp[account];
+        if (t >= _fees_duration) return 0;
+        uint f = _fees[account]; if (f == 0) f = _default_fees;
+        return f.mul(t).div(_fees_duration);
+    }
+
+    // Stake yCrv for yyCrv
+    function stake(uint256 _amount) external {
         require(_amount > 0, "deposit must be greater than 0");
         yCrv.transferFrom(msg.sender, address(this), _amount);
         // invariant: shares/totalSupply = amount/pool
         uint256 shares = (_amount.mul(_totalSupply)).div(pool);
-        pool += _amount;
-        _mint(msg.sender, shares); 
+        pool += _amount; _mint(msg.sender, shares);
+        if (_fees[msg.sender] != uint16(-1)) _stake_timestamp[msg.sender] = block.timestamp;
     }
 
-    // Redeem any invested tokens from the pool
-    function redeem(uint256 _shares) external nonReentrant {
+    // Unstake yyCrv for yCrv
+    function unstake(uint256 _shares) external nonReentrant {
         require(_shares > 0, "deposit must be greater than 0");        
         // invariant: shres/totalSupply = amount/pool
         uint256 _amount = (pool.mul(_shares)).div(_totalSupply);
-        _burn(msg.sender, _shares);
+        _burn(msg.sender, _shares); pool -= _amount;                
+        _amount = _amount.sub(_amount.mul(fee(msg.sender)).div(1000));
         uint256 b = yCrv.balanceOf(address(this));
-        if (b < _amount) withdraw(_amount - b);    
+        if (b < _amount) withdraw(_amount - b);
         yCrv.transfer(msg.sender, _amount);
     }    
 
@@ -388,7 +404,7 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         address[] memory path = new address[](3);
         path[0] = 0xD533a949740bb3306d119CC777fa900bA034cd52; // CRV
         path[1] = WETH;
-        path[2] = 0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8; //yCrv;      
+        path[2] = 0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8; // yCrv;      
         IUniswap(uniswap).swapExactTokensForTokens(_crv, uint(0), path, address(this), now.add(1800));
 
         uint yCrv_delta = yCrv.balanceOf(address(this)).sub(yCrv_before_swap);
@@ -406,5 +422,5 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         CRV.approve(crv_consul, uint(-1));
     }
 
-    /* veCRV Booster */    
+    /* veCRV Booster */
 }
