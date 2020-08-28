@@ -28,7 +28,6 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
     uint public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
     uint8 public swap_fee;
 
-
     uint private unlocked = 1;
     modifier lock() {
         require(unlocked == 1, 'UniswapV2: LOCKED');
@@ -205,5 +204,13 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
     // force reserves to match balances
     function sync() external lock {
         _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
+    }
+
+    function delegate() public lock {
+
+    }
+
+    function retract() public lock {
+
     }
 }
