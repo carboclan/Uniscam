@@ -1,0 +1,63 @@
+
+Frontend/src/constants/index.ts:
+   5  
+   6: export const ROUTER_ADDRESS = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
+   7  
+
+  12  
+  13: export const DAI = new Token(ChainId.MAINNET, '0x6B175474E89094C44Da98b954EedeAC495271d0F', 18, 'DAI', 'Dai Stablecoin')
+  14: export const USDC = new Token(ChainId.MAINNET, '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', 6, 'USDC', 'USD//C')
+  15: export const USDT = new Token(ChainId.MAINNET, '0xdAC17F958D2ee523a2206206994597C13D831ec7', 6, 'USDT', 'Tether USD')
+  16: export const COMP = new Token(ChainId.MAINNET, '0xc00e94Cb662C3520282E6f5717214004A7f26888', 18, 'COMP', 'Compound')
+  17: export const MKR = new Token(ChainId.MAINNET, '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2', 18, 'MKR', 'Maker')
+  18: export const AMPL = new Token(ChainId.MAINNET, '0xD46bA6D942050d489DBd938a2C909A5d5039A161', 9, 'AMPL', 'Ampleforth')
+  19  
+
+  58      [
+  59:       new Token(ChainId.MAINNET, '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643', 8, 'cDAI', 'Compound Dai'),
+  60:       new Token(ChainId.MAINNET, '0x39AA39c021dfbaE8faC545936693aC917d5E7563', 8, 'cUSDC', 'Compound USD Coin')
+  61      ],
+
+Frontend/src/constants/abis/migrator.ts:
+  2  
+  3: const MIGRATOR_ADDRESS = '0x16D4F26C15f3658ec65B1126ff27DD3dF2a2996b'
+  4  
+
+Frontend/src/constants/multicall/index.ts:
+  4  const MULTICALL_NETWORKS: { [chainId in ChainId]: string } = {
+  5:   [ChainId.MAINNET]: '0xeefBa1e63905eF1D7ACbA5a8513c70307C1cE441',
+  6:   [ChainId.ROPSTEN]: '0x53C43764255c17BD724F74c4eF150724AC50a3ed',
+  7:   [ChainId.KOVAN]: '0x2cc8688C5f75E365aaEEb4ea8D6a480405A48D2A',
+  8:   [ChainId.RINKEBY]: '0x42Ad527de7d4e9d9d011aC45B31D8551f8Fe9821',
+  9:   [ChainId.GÖRLI]: '0x77dCa2C955b15e9dE4dbBCf1246B4B85b651e50e'
+  10  }
+
+Frontend/src/constants/v1/index.ts:
+   6  const V1_FACTORY_ADDRESSES: { [chainId in ChainId]: string } = {
+   7:   [ChainId.MAINNET]: '0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95',
+   8:   [ChainId.ROPSTEN]: '0x9c83dCE8CA20E9aAF9D3efc003b2ea62aBC08351',
+   9:   [ChainId.RINKEBY]: '0xf5D915570BC477f9B8D6C0E980aA81757A3AaC36',
+  10:   [ChainId.GÖRLI]: '0x6Ce570d02D73d4c384b46135E87f8C592A8c86dA',
+  11:   [ChainId.KOVAN]: '0xD3E51Ef092B2845f10401a0159B2B96e8B6c3D30'
+  12  }
+
+Frontend/src/hooks/useContract.ts:
+  62        case ChainId.RINKEBY:
+  63:         address = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e'
+  64          break
+
+  89    return useContract(
+  90:     chainId === ChainId.MAINNET ? '0x65770b5283117639760beA3F867b69b3697a91dd' : undefined,
+  91      UNISOCKS_ABI,
+
+Frontend/src/state/swap/hooks.ts:
+  91  const BAD_RECIPIENT_ADDRESSES: string[] = [
+  92:   '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f', // v2 factory
+  93:   '0xf164fC0Ec4E93095b804a4795bBe1e041497b92a', // v2 router 01
+  94:   '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D' // v2 router 02
+  95  ]
+
+Frontend/src/utils/resolveENSContentHash.ts:
+  25  ]
+  26: const REGISTRAR_ADDRESS = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e'
+  27  
