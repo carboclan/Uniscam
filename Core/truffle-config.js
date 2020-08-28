@@ -74,7 +74,6 @@ module.exports = {
       network_id: 4,       // rinkeby's id
       gas: 6700000,        // rinkeby has a lower block limit than mainnet
       gasPrice: 10000000000,      
-      from: "0x6465F1250c9fe162602Db83791Fc3Fb202D70a7B",      
       confirmations: 2,    // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
