@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1920px" height="540px" viewBox="0 0 1920 540" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>line</title>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="1920" height="540"></rect>
+        <filter x="-100.0%" y="-1.1%" width="300.0%" height="102.2%" filterUnits="objectBoundingBox" id="filter-3">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-100.0%" y="-0.9%" width="300.0%" height="101.9%" filterUnits="objectBoundingBox" id="filter-4">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-100.0%" y="-0.6%" width="300.0%" height="101.3%" filterUnits="objectBoundingBox" id="filter-5">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-100.0%" y="-0.6%" width="300.0%" height="101.2%" filterUnits="objectBoundingBox" id="filter-6">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-120.7%" y="-0.6%" width="341.5%" height="101.1%" filterUnits="objectBoundingBox" id="filter-7">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-140.2%" y="-0.6%" width="380.3%" height="101.3%" filterUnits="objectBoundingBox" id="filter-8">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-173.2%" y="-0.5%" width="446.3%" height="101.0%" filterUnits="objectBoundingBox" id="filter-9">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-152.8%" y="-0.5%" width="405.6%" height="101.1%" filterUnits="objectBoundingBox" id="filter-10">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-162.9%" y="-0.5%" width="425.9%" height="101.0%" filterUnits="objectBoundingBox" id="filter-11">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-199.3%" y="-0.6%" width="498.5%" height="101.1%" filterUnits="objectBoundingBox" id="filter-12">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-214.9%" y="-0.6%" width="529.8%" height="101.2%" filterUnits="objectBoundingBox" id="filter-13">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-100.0%" y="-0.9%" width="300.0%" height="101.9%" filterUnits="objectBoundingBox" id="filter-14">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-100.0%" y="-0.6%" width="300.0%" height="101.3%" filterUnits="objectBoundingBox" id="filter-15">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-100.0%" y="-0.6%" width="300.0%" height="101.2%" filterUnits="objectBoundingBox" id="filter-16">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-120.7%" y="-0.6%" width="341.5%" height="101.1%" filterUnits="objectBoundingBox" id="filter-17">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-140.2%" y="-0.6%" width="380.3%" height="101.3%" filterUnits="objectBoundingBox" id="filter-18">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-173.2%" y="-0.5%" width="446.3%" height="101.0%" filterUnits="objectBoundingBox" id="filter-19">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-152.8%" y="-0.5%" width="405.6%" height="101.1%" filterUnits="objectBoundingBox" id="filter-20">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-162.9%" y="-0.5%" width="425.9%" height="101.0%" filterUnits="objectBoundingBox" id="filter-21">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-199.3%" y="-0.6%" width="498.5%" height="101.1%" filterUnits="objectBoundingBox" id="filter-22">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-214.9%" y="-0.6%" width="529.8%" height="101.2%" filterUnits="objectBoundingBox" id="filter-23">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-0.3%" y="-150.0%" width="100.6%" height="400.0%" filterUnits="objectBoundingBox" id="filter-24">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-0.3%" y="-200.0%" width="100.6%" height="500.0%" filterUnits="objectBoundingBox" id="filter-25">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-0.3%" y="-300.0%" width="100.6%" height="700.0%" filterUnits="objectBoundingBox" id="filter-26">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-0.3%" y="-400.0%" width="100.6%" height="900.0%" filterUnits="objectBoundingBox" id="filter-27">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-0.3%" y="-400.0%" width="100.6%" height="900.0%" filterUnits="objectBoundingBox" id="filter-28">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-0.3%" y="-600.0%" width="100.6%" height="1300.0%" filterUnits="objectBoundingBox" id="filter-29">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-0.3%" y="-1200.0%" width="100.6%" height="2500.0%" filterUnits="objectBoundingBox" id="filter-30">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-0.3%" y="-1200.0%" width="100.6%" height="2500.0%" filterUnits="objectBoundingBox" id="filter-31">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-0.3%" y="-1200.0%" width="100.6%" height="2500.0%" filterUnits="objectBoundingBox" id="filter-32">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <filter x="-0.3%" y="-100.0%" width="100.6%" height="300.0%" filterUnits="objectBoundingBox" id="filter-33">
+            <feGaussianBlur stdDeviation="2" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+    </defs>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Uniscam首页" transform="translate(0.000000, -541.000000)">
+            <g id="line" transform="translate(0.000000, 541.000000)">
+                <mask id="mask-2" fill="white">
+                    <use xlink:href="#path-1"></use>
+                </mask>
+                <use id="蒙版" fill-opacity="0" fill="#1B1B1B" xlink:href="#path-1"></use>
+                <g mask="url(#mask-2)">
+                    <g transform="translate(-423.000000, 0.000000)">
+                        <g id="line2">
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-3)" points="1385 4.64163739 1385 554.641637 1379 554.641637"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-4)" transform="translate(1201.638626, 292.295197) rotate(25.000000) translate(-1201.638626, -292.295197) " points="1203.76964 -26.0890983 1204.63863 610.679492 1198.63863 610.679492"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-5)" transform="translate(968.855141, 333.786497) rotate(45.000000) translate(-968.855141, -333.786497) " points="970.642243 -133.481729 971.855141 801.054723 965.855141 801.054723"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-6)" transform="translate(842.097806, 271.950426) rotate(58.000000) translate(-842.097806, -271.950426) " points="841.9068 -232.176946 845.097806 776.077799 839.097806 776.077799"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-7)" transform="translate(755.956806, 222.383873) rotate(66.000000) translate(-755.956806, -222.383873) " points="755.191709 -311.2373 758.441516 755.334357 753.472096 756.005047"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-8)" transform="translate(775.562723, 151.002757) rotate(72.000000) translate(-775.562723, -151.002757) " points="777.440906 -328.412228 777.702959 628.604182 773.422487 630.417742"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-9)" transform="translate(658.507669, 135.453824) rotate(77.000000) translate(-658.507669, -135.453824) " points="658.016397 -443.93224 660.240189 714.554064 656.775149 714.839888"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-10)" transform="translate(653.260383, 100.400495) rotate(80.000000) translate(-653.260383, -100.400495) " points="654.1812 -456.275001 655.223894 654.970358 651.296871 657.075992"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-11)" transform="translate(587.575343, 85.662781) rotate(82.000000) translate(-587.575343, -85.662781) " points="589.05128 -507 589.4165 678.325562 585.734186 677.938535"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-12)" transform="translate(572.349317, 71.395255) rotate(83.000000) translate(-572.349317, -71.395255) " points="570.843774 -464.090494 573.854859 606.881003 571.062791 606.734677"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-13)" transform="translate(551.972784, 57.514879) rotate(84.000000) translate(-551.972784, -57.514879) " points="552.948726 -457.596845 553.368818 572.626602 550.57675 572.480276"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-14)" transform="translate(1562.938124, 292.295197) scale(-1, 1) rotate(25.000000) translate(-1562.938124, -292.295197) " points="1565.06914 -26.0890983 1565.93812 610.679492 1559.93812 610.679492"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-15)" transform="translate(1795.721609, 333.786497) scale(-1, 1) rotate(45.000000) translate(-1795.721609, -333.786497) " points="1797.50871 -133.481729 1798.72161 801.054723 1792.72161 801.054723"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-16)" transform="translate(1922.478944, 271.950426) scale(-1, 1) rotate(58.000000) translate(-1922.478944, -271.950426) " points="1922.28794 -232.176946 1925.47894 776.077799 1919.47894 776.077799"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-17)" transform="translate(2008.619944, 222.383873) scale(-1, 1) rotate(66.000000) translate(-2008.619944, -222.383873) " points="2007.85485 -311.2373 2011.10465 755.334357 2006.13523 756.005047"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-18)" transform="translate(1989.014027, 151.002757) scale(-1, 1) rotate(72.000000) translate(-1989.014027, -151.002757) " points="1990.89221 -328.412228 1991.15426 628.604182 1986.87379 630.417742"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-19)" transform="translate(2106.069081, 135.453824) scale(-1, 1) rotate(77.000000) translate(-2106.069081, -135.453824) " points="2105.57781 -443.93224 2107.8016 714.554064 2104.33656 714.839888"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-20)" transform="translate(2111.316367, 100.400495) scale(-1, 1) rotate(80.000000) translate(-2111.316367, -100.400495) " points="2112.23718 -456.275001 2113.27988 654.970358 2109.35286 657.075992"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-21)" transform="translate(2177.001407, 85.662781) scale(-1, 1) rotate(82.000000) translate(-2177.001407, -85.662781) " points="2178.47734 -507 2178.84256 678.325562 2175.16025 677.938535"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-22)" transform="translate(2192.227433, 71.395255) scale(-1, 1) rotate(83.000000) translate(-2192.227433, -71.395255) " points="2190.72189 -464.090494 2193.73298 606.881003 2190.94091 606.734677"></polygon>
+                            <polygon id="矩形" fill="#0067FF" filter="url(#filter-23)" transform="translate(2212.603966, 57.514879) scale(-1, 1) rotate(84.000000) translate(-2212.603966, -57.514879) " points="2213.57991 -457.596845 2214 572.626602 2211.20793 572.480276"></polygon>
+                        </g>
+                        <g id="line1" transform="translate(422.000000, 14.641637)">
+                            <rect id="矩形" fill="#0067FF" filter="url(#filter-24)" x="0" y="219" width="1920" height="4"></rect>
+                            <rect id="矩形" fill="#0067FF" filter="url(#filter-25)" x="0" y="144" width="1920" height="3"></rect>
+                            <rect id="矩形" fill="#0067FF" filter="url(#filter-26)" x="0" y="97" width="1920" height="2"></rect>
+                            <rect id="矩形" fill="#0067FF" filter="url(#filter-27)" x="0" y="69" width="1920" height="1.5"></rect>
+                            <rect id="矩形" fill="#0067FF" filter="url(#filter-28)" x="0" y="49" width="1920" height="1.5"></rect>
+                            <rect id="矩形" fill="#0067FF" filter="url(#filter-29)" x="0" y="33" width="1920" height="1"></rect>
+                            <rect id="矩形" fill="#0067FF" filter="url(#filter-30)" x="0" y="20" width="1920" height="1"></rect>
+                            <rect id="矩形" fill="#0067FF" filter="url(#filter-31)" x="0" y="9" width="1920" height="1"></rect>
+                            <rect id="矩形" fill="#0067FF" filter="url(#filter-32)" x="0" y="0" width="1920" height="1"></rect>
+                            <rect id="矩形" fill="#0067FF" filter="url(#filter-33)" x="0" y="343" width="1920" height="6"></rect>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
