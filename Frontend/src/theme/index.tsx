@@ -224,7 +224,7 @@ body {
     auto calc(100% * 0.414814814814815) /* MountainRightImg */,
     100% 50% /* Top background color */,
     100% 4px /* Blue line */,
-    100% auto /* MatrixImg */,
+    auto 50% /* MatrixImg */,
     100% 50% /* Bottom background color */;
   background-position: top calc(50% - (100vh * 0.414814814814815 / 2)) left /* MountainLeftImg */,
     top calc(50% - (100vh * 0.414814814814815 / 2)) right /* MountainRightImg */,
