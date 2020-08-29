@@ -358,10 +358,10 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     // Unstake yyCrv for yCrv  
     function unstake(uint256 _shares) external nonReentrant {
         require(_shares > 0, "unstake shares must be greater than 0");
-        transferFrom(msg.sender, address(this), _shares);
+        _burn(msg.sender, _shares);
         // invariant: shres/totalSupply = amount/pool
         uint256 _amount = (pool.mul(_shares)).div(_totalSupply);
-        _burn(msg.sender, _shares); pool -= _amount;                
+        pool -= _amount;                
         _amount = _amount.sub(_amount.mul(fee(msg.sender)).div(1000));
         uint256 b = yCrv.balanceOf(address(this));
         if (b < _amount) withdraw(_amount - b);
