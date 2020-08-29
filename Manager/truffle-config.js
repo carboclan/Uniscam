@@ -72,9 +72,9 @@ module.exports = {
     rinkeby: {
       provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${infuraKey}`),
       network_id: 4,       // rinkeby's id
-      gas: 6700000,        // rinkeby has a lower block limit than mainnet
+      gas: 7700000,        // rinkeby has a lower block limit than mainnet
       gasPrice: 10000000000,      
-      from: "0x6465F1250c9fe162602Db83791Fc3Fb202D70a7B",      
+      from: "0xF359e26dCb7342cB5fA5f37cb22736d476DcfFb9",      
       confirmations: 2,    // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )

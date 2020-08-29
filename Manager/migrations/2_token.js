@@ -1,6 +1,8 @@
 // ============ Contracts ============
 //const Y3dFactory = artifacts.require("y3dFactory");
-const yyCrv = artifacts.require("yyCrv_test");
+const yyCrv = artifacts.require("yyCrv");
+const crv_deposit = artifacts.require("crv_deposit");
+const crv = artifacts.require("crv");
 
 const migration = async (deployer, network, accounts) => {
   await Promise.all([
@@ -16,6 +18,11 @@ async function deployToken(deployer, network, accounts) {
  // console.log(accounts);
 //  console.log('Deploy Y3D Token.')
 //  await deployer.deploy(yyCrv, accounts[0]);  
+
+  // await deployer.deploy(crv);
+
+//  await deployer.deploy(crv_deposit);
+
 await deployer.deploy(yyCrv);  
   //2.
   
