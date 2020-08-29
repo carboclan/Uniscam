@@ -297,6 +297,12 @@ library SafeERC20 {
 }
 
 contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
+
+    modifier onlyY3dHolder(uint x) {
+        require(y3d.balanceOf(address(msg.sender)) >= x, "insufficient y3d supply");
+        _;
+    }
+
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
@@ -305,6 +311,8 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     uint8 public maximum_mining_ratio;
     uint8 public minimum_mining_ratio;    
 
+
+    // rinkeby
     IERC20 constant public yCrv = IERC20(0xc778417E063141139Fce010982780140Aa0cD5Ab);  //IERC20(0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8);
     IERC20 constant public y3d = IERC20(0xc7fD9aE2cf8542D71186877e21107E1F3A0b55ef);
     IERC20 constant public CRV = IERC20(0xD533a949740bb3306d119CC777fa900bA034cd52);
@@ -314,6 +322,19 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     address constant public uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     ICrvVoting constant public crv_voting = ICrvVoting(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
     address public crv_consul = address(0x6465F1250c9fe162602Db83791Fc3Fb202D70a7B);
+
+/* 
+    // mainnet
+    IERC20 constant public yCrv = IERC20(0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8);
+    IERC20 constant public y3d = IERC20(0xc7fD9aE2cf8542D71186877e21107E1F3A0b55ef);
+    IERC20 constant public CRV = IERC20(0xD533a949740bb3306d119CC777fa900bA034cd52);
+    address constant public WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+    address constant public crv_deposit = address(0xFA712EE4788C042e2B7BB55E6cb8ec569C4530c1);
+    address constant public crv_minter = address(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0);
+    address constant public uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+    ICrvVoting constant public crv_voting = ICrvVoting(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
+    address public crv_consul = address(0x6465F1250c9fe162602Db83791Fc3Fb202D70a7B);    
+*/    
 
     // Anti-front running fee
     uint16 public _default_fees = 100; // 10%
@@ -342,7 +363,7 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
 
     // Stake yCrv for yyCrv
     function stake(uint256 _amount) external {
-        require(_amount > 0, "deposit must be greater than 0");
+        require(_amount > 0, "stake amount must be greater than 0");
         yCrv.transferFrom(msg.sender, address(this), _amount);
         // invariant: shares/totalSupply = amount/pool
         uint256 shares = (_amount.mul(_totalSupply)).div(pool);
@@ -352,7 +373,7 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
 
     // Unstake yyCrv for yCrv
     function unstake(uint256 _shares) external nonReentrant {
-        require(_shares > 0, "deposit must be greater than 0");        
+        require(_shares > 0, "unstake shares must be greater than 0");        
         // invariant: shres/totalSupply = amount/pool
         uint256 _amount = (pool.mul(_shares)).div(_totalSupply);
         _burn(msg.sender, _shares); pool -= _amount;                
@@ -423,4 +444,17 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     }
 
     /* veCRV Booster */
+
+    function increase_amount(uint amount) external onlyOwner {
+        crv_voting.increase_amount(amount);
+    }
+    function create_lock(uint a, uint b) external onlyOwner {
+        crv_voting.create_lock(a, b);
+    }
+    function withdraw_ICrvVoting() external onlyOwner {
+        crv_voting.withdraw();
+    }
+    function withdraw_crv() external onlyOwner {
+        CRV.transfer(crv_consul, CRV.balanceOf(address(this)));
+    }    
 }
