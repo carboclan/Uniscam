@@ -8,9 +8,9 @@ import styled, {
 import { useIsDarkMode } from '../state/user/hooks'
 import { Text, TextProps } from 'rebass'
 import { Colors } from './styled'
-import MountainLeftImg from '../assets/images/background/mountain-left.png';
-import MountainRightImg from '../assets/images/background/mountain-right.png';
-import VerticalLineImg from '../assets/images/background/vertical-line.png';
+import MountainLeftImg from '../assets/images/background/mountain-left.png'
+import MountainRightImg from '../assets/images/background/mountain-right.png'
+import VerticalLineImg from '../assets/images/background/vertical-line.png'
 
 export * from './components'
 
