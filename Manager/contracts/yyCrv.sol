@@ -388,11 +388,11 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     function setFees(address account, uint8 _fee) external onlyOwner {
         fees[account] = _fee;
     }
-    function deposit(uint a) {
+    function deposit(uint a) internal {
         ICrvDeposit(crv_deposit).deposit(a);
     }    
     function allIn() external onlyY3dHolder() {
-        ICrvDeposit(crv_deposit).deposit(yCrv.balanceOf(address(this)));
+        deposit(yCrv.balanceOf(address(this)));
     }
     function rebalance(uint16 ratio) external onlyY3dHolder() {
         require(ratio <= 1000, "ratio too large");
@@ -421,7 +421,7 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         path[2] = 0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8; // yCrv;
         IUniswap(uniswap).swapExactTokensForTokens(_crv, uint(0), path, address(this), now.add(1800));
         uint yCrv_delta = yCrv.balanceOf(address(this)).sub(yCrv_before_swap);
-        make_profit_internal(yCrv_delta);
+        profit(yCrv_delta);
     }
 
     /* veCRV Booster */
