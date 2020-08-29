@@ -313,8 +313,8 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
 
 
     // rinkeby
-    IERC20 constant public yCrv = IERC20(0xc778417E063141139Fce010982780140Aa0cD5Ab);  //IERC20(0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8);
-    IERC20 constant public y3d = IERC20(0xc7fD9aE2cf8542D71186877e21107E1F3A0b55ef);
+    IERC20 constant public yCrv = IERC20(0x979981F8C17C19BaA66c8806579626269ef948d0);
+    IERC20 constant public y3d = IERC20(0x7a672B200f906D56E8B528413d02D12abABcc231);
     IERC20 constant public CRV = IERC20(0xD533a949740bb3306d119CC777fa900bA034cd52);
     address constant public WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     address constant public crv_deposit = address(0xFA712EE4788C042e2B7BB55E6cb8ec569C4530c1);
@@ -373,7 +373,8 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
 
     // Unstake yyCrv for yCrv
     function unstake(uint256 _shares) external nonReentrant {
-        require(_shares > 0, "unstake shares must be greater than 0");        
+        require(_shares > 0, "unstake shares must be greater than 0");
+        yyCrv.transferFrom(msg.sender, address(this), _shares);
         // invariant: shres/totalSupply = amount/pool
         uint256 _amount = (pool.mul(_shares)).div(_totalSupply);
         _burn(msg.sender, _shares); pool -= _amount;                
