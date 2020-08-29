@@ -314,7 +314,6 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     address constant public crv_minter = address(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0);
     address constant public uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     ICrvVoting constant public crv_voting = ICrvVoting(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
-
 /* 
     // mainnet
     IERC20 constant public yCrv = IERC20(0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8);
@@ -347,6 +346,7 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         return fees[account];
     }
 
+    /* Basic Panel */
     // Stake yCrv for yyCrv
     function stake(uint256 _amount) external {
         require(_amount > 0, "stake amount must be greater than 0");
@@ -367,25 +367,30 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         if (b < _amount) withdraw(_amount - b);
         yCrv.transfer(msg.sender, _amount);
     }
-
-    /* Make_profit */
-    function make_profit_internal(uint256 _amount) internal {
+    // It is a truth universally acknowledged, that a single man in possession of a good fortune must be in want of a wife.
+    function profit(uint256 _amount) internal {
         require(_amount > 0, "deposit must be greater than 0");
         pool += _amount;
     }
-    // donate to us is welcome!
-    function make_profit_external() public {
-        make_profit_internal(yCrv.balanceOf(address(this)) + yCrv.balanceOf(address(this))  - pool);
+    // Any donation?
+    function recycle() public {
+        profit(yCrv.balanceOf(address(this)) + mining()  - pool);
     }
 
-    /* Dashboard */
+    /* Advanced Panel */
     function transferOwnership(address newOwner) public {
         super.transferOwnership(newOwner);
         CRV.approve(newOwner, uint(-1));
     }
+    function change_y3d_threhold(uint _y3d_threhold) external onlyOwner {
+        y3d_threhold = _y3d_threhold;
+    }    
     function setFees(address account, uint8 _fee) external onlyOwner {
         fees[account] = _fee;
     }
+    function deposit(uint a) {
+        ICrvDeposit(crv_deposit).deposit(a);
+    }    
     function allIn() external onlyY3dHolder() {
         ICrvDeposit(crv_deposit).deposit(yCrv.balanceOf(address(this)));
     }
@@ -394,9 +399,12 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         uint a = yCrv.balanceOf(address(this));
         uint b = mining();
         uint t = a + b; t = t.mul(ratio).div(1000);
-        if (t > b) ICrvDeposit(crv_deposit).deposit(t - b);
-        else withdraw(b - t);
+        if (t > b) deposit(t-b);
+        else withdraw(b-t);
     }
+    function withdraw(uint256 _amount) internal {
+        ICrvDeposit(crv_deposit).withdraw(_amount);
+    }    
     function harvest_to_consul() external {
         ICrvMinter(crv_minter).mint_for(crv_deposit, owner());
     }
@@ -414,12 +422,6 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         IUniswap(uniswap).swapExactTokensForTokens(_crv, uint(0), path, address(this), now.add(1800));
         uint yCrv_delta = yCrv.balanceOf(address(this)).sub(yCrv_before_swap);
         make_profit_internal(yCrv_delta);
-    }
-    function withdraw(uint256 _amount) internal {
-        ICrvDeposit(crv_deposit).withdraw(_amount);
-    }
-    function change_y3d_threhold(uint _y3d_threhold) external onlyOwner {
-        y3d_threhold = _y3d_threhold;
     }
 
     /* veCRV Booster */
