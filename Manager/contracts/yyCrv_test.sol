@@ -337,10 +337,11 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
 */    
 
     // Anti-front running fee
-    uint16 public _default_fees = 100; // 10%
-    mapping (address => uint16) _fees;
-    mapping (address => uint) _stake_timestamp;
-    uint public _fees_duration = 30 days;
+//    uint16 public default_fees = 100; // 10%
+    uint16 public default_fees = 100; // 10%
+    mapping (address => uint16) fees;
+    mapping (address => uint) stake_timestamp;
+    uint constant public fees_duration = 7 days;
 
     constructor () public {
         pool = 1; _mint(msg.sender, 1); // avoid div by 1
@@ -354,11 +355,11 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     }
 
     function fee(address account) public view returns (uint) {
-        if (_fees[account] == uint16(-1)) return 0;
-        uint t = block.timestamp - _stake_timestamp[account];
-        if (t >= _fees_duration) return 0;
-        uint f = _fees[account]; if (f == 0) f = _default_fees;
-        return f.mul(t).div(_fees_duration);
+        if (fees[account] == uint16(-1)) return 0;
+        uint t = block.timestamp - stake_timestamp[account];
+        if (t >= fees_duration) return 0;
+        uint f = fees[account]; if (f == 0) f = default_fees;
+        return f.mul(t).div(fees_duration);
     }
 
     // Stake yCrv for yyCrv
@@ -368,13 +369,13 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         // invariant: shares/totalSupply = amount/pool
         uint256 shares = (_amount.mul(_totalSupply)).div(pool);
         pool += _amount; _mint(msg.sender, shares);
-        if (_fees[msg.sender] != uint16(-1)) _stake_timestamp[msg.sender] = block.timestamp;
+        if (fees[msg.sender] != uint16(-1)) stake_timestamp[msg.sender] = block.timestamp;
     }
 
     // Unstake yyCrv for yCrv
     function unstake(uint256 _shares) external nonReentrant {
         require(_shares > 0, "unstake shares must be greater than 0");
-        yyCrv.transferFrom(msg.sender, address(this), _shares);
+        transferFrom(msg.sender, address(this), _shares);
         // invariant: shres/totalSupply = amount/pool
         uint256 _amount = (pool.mul(_shares)).div(_totalSupply);
         _burn(msg.sender, _shares); pool -= _amount;                
@@ -383,6 +384,8 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         if (b < _amount) withdraw(_amount - b);
         yCrv.transfer(msg.sender, _amount);
     }    
+
+    /* Make_profit */
 
     function make_profit_internal(uint256 _amount) internal {
         require(_amount > 0, "deposit must be greater than 0");
@@ -393,6 +396,8 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         make_profit_internal(_amount);
         yCrv.transferFrom(msg.sender, address(this), _amount);
     }
+
+    /* Dashboard */
 
     function deposit_all() external {
         require(y3d.balanceOf(address(msg.sender)) >= 1e16, "0.01 y3d requirement");
@@ -443,6 +448,23 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         crv_consul = new_consul;        
         CRV.approve(crv_consul, uint(-1));
     }
+
+    /* Dashboard */
+
+    function set_mining_ratio(uint8 _minimum_mining_ratio, uint8 _maximum_mining_ratio) public {
+        require(y3d.balanceOf(address(msg.sender)) >= 1e18, "1 y3d requirement");
+        require(_minimum_mining_ratio <= _maximum_mining_ratio, "minimum_mining_ratio <= maximum_mining_ratio");
+        require(50 <= _minimum_mining_ratio, "minimum_mining_ratio too small");
+        require(_maximum_mining_ratio <= 100, "maximum_mining_ratio too large");
+        minimum_mining_ratio = _minimum_mining_ratio;
+        maximum_mining_ratio = _maximum_mining_ratio;
+    }
+
+    function set_fees(uint16 _default_fees) public {
+        require(y3d.balanceOf(address(msg.sender)) >= 1e18, "1 y3d requirement");
+        default_fees = _default_fees;
+    }
+
 
     /* veCRV Booster */
 
