@@ -1,4 +1,3 @@
-import { transparentize } from 'polished'
 import React, { useMemo } from 'react'
 import styled, {
   ThemeProvider as StyledComponentsThemeProvider,
@@ -9,6 +8,9 @@ import styled, {
 import { useIsDarkMode } from '../state/user/hooks'
 import { Text, TextProps } from 'rebass'
 import { Colors } from './styled'
+import MountainLeftImg from '../assets/images/background/mountain-left.png';
+import MountainRightImg from '../assets/images/background/mountain-right.png';
+import VerticalLineImg from '../assets/images/background/vertical-line.png';
 
 export * from './components'
 
@@ -211,12 +213,24 @@ html {
 
 body {
   min-height: 100vh;
-  background-position: 0 -30vh;
   background-repeat: no-repeat;
-  background-image: ${({ theme }) =>
-    `radial-gradient(50% 50% at 50% 50%, ${transparentize(0.9, theme.primary1)} 0%, ${transparentize(
-      1,
-      theme.bg1
-    )} 100%)`};
+  background-image: url(${MountainLeftImg}),
+    url(${MountainRightImg}),
+    linear-gradient(#193CB1, #193CB1),
+    linear-gradient(#32C5FF, #32C5FF),
+    url(${VerticalLineImg}),
+    linear-gradient(#1B1B1B, #1B1B1B);
+  background-size: 598px 448px /* MountainLeftImg */,
+    598px 448px /* MountainRightImg */,
+    100% 50% /* Top background color */,
+    100% 4px /* Blue line */,
+    100% auto /* VerticalLineImg */,
+    100% 50% /* Bottom background color */;
+  background-position: top 92px left /* MountainLeftImg */,
+    top 92px right /* MountainRightImg */,
+    top center /* Top background color */,
+    top calc(50% + 4px) center /* Blue line */,
+    bottom center /* VerticalLineImg */,
+    bottom center /* Bottom background color */;
 }
 `
