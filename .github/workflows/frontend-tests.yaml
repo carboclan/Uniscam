@@ -1,4 +1,4 @@
-name: Tests
+name: Frontend Tests
 on:
   push:
     branches:
@@ -26,6 +26,7 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
+      - run: cd ./Frontend
       - run: yarn install --frozen-lockfile
       - run: yarn cypress install
       - run: yarn build
@@ -52,6 +53,7 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
+      - run: cd ./Frontend
       - run: yarn install --frozen-lockfile
       - run: yarn test
 
@@ -74,6 +76,7 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
+      - run: cd ./Frontend
       - run: yarn install --frozen-lockfile
       - run: yarn lint
 
