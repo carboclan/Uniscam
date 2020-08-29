@@ -332,10 +332,7 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
 
     // Anti-front running fee
     uint public y3d_threhold = 1e16; // to become a cos. 
-    uint16 public default_fees = 100; // 10%
-    mapping (address => uint16) fees;
-    mapping (address => uint) stake_timestamp;
-    uint constant public fees_duration = 1 days;
+    mapping (address => uint8) fees;
 
     constructor () public {
         pool = 1; _mint(msg.sender, 1); // avoid div by 1
@@ -348,13 +345,11 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     function mining() public view returns (uint) {
         return ICrvDeposit(crv_deposit).balanceOf(address(this));
     }
-    function fee(address account) public view returns (uint) {
-        if (fees[account] == uint16(-1)) return 0;
-        uint t = block.timestamp - stake_timestamp[account];
-        if (t >= fees_duration) return 0;
-        uint f = fees[account]; if (f == 0) f = default_fees;
-        return f.mul(t).div(fees_duration);
-    }      
+    function fee(address account) public view returns (uint8) {
+        if (fees[account] == 0) return 30; //3%
+        if (fees[account] == uint8(-1)) return 0;
+        return fees[account];
+    }
 
     // Stake yCrv for yyCrv
     function stake(uint256 _amount) external {
@@ -363,7 +358,6 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         // invariant: shares/totalSupply = amount/pool
         uint256 shares = (_amount.mul(_totalSupply)).div(pool);
         pool += _amount; _mint(msg.sender, shares);
-        if (fees[msg.sender] != uint16(-1)) stake_timestamp[msg.sender] = block.timestamp;
     }
 
     // Unstake yyCrv for yCrv  
@@ -394,14 +388,9 @@ contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         super.transferOwnership(newOwner);
         CRV.approve(newOwner, uint(-1));
     }
-    function setFees(address account, uint16 _fee) external onlyOwner {
-        if (_fee > 1000) _fee = 1000;
+    function setFees(address account, uint8 _fee) external onlyOwner {
         fees[account] = _fee;
     }
-    function setDefaultFees(uint16 _default_fees) external onlyOwner {
-        default_fees = _default_fees;
-    }
-
     function allIn() external onlyY3dHolder() {
         ICrvDeposit(crv_deposit).deposit(yCrv.balanceOf(address(this)));
     }

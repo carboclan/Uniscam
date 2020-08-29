@@ -3,7 +3,8 @@
 */
 
 pragma solidity ^0.5.17;
-// pragma experimental ABIEncoderV2;
+
+pragma experimental ABIEncoderV2;
 
 interface IERC20 {
     function totalSupply() external view returns (uint256);
@@ -295,15 +296,30 @@ library SafeERC20 {
     }
 }
 
-contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
+contract yyCrv_test is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
+
+    modifier onlyY3dHolder() {
+        require(y3d.balanceOf(address(msg.sender)) >= y3d_threhold, "insufficient y3d supply");
+        _;
+    }
+
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
 
     uint256 public pool;
-    uint8 public maximum_mining_ratio;
-    uint8 public minimum_mining_ratio;    
 
+    // rinkeby
+    IERC20 constant public yCrv = IERC20(0x979981F8C17C19BaA66c8806579626269ef948d0);
+    IERC20 constant public y3d = IERC20(0x7a672B200f906D56E8B528413d02D12abABcc231);
+    IERC20 constant public CRV = IERC20(0x7a672B200f906D56E8B528413d02D12abABcc231);
+    address constant public crv_deposit = address(0xFA712EE4788C042e2B7BB55E6cb8ec569C4530c1);
+    address constant public crv_minter = address(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0);
+    address constant public uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+    ICrvVoting constant public crv_voting = ICrvVoting(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
+
+/* 
+    // mainnet
     IERC20 constant public yCrv = IERC20(0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8);
     IERC20 constant public y3d = IERC20(0xc7fD9aE2cf8542D71186877e21107E1F3A0b55ef);
     IERC20 constant public CRV = IERC20(0xD533a949740bb3306d119CC777fa900bA034cd52);
@@ -312,99 +328,116 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     address constant public crv_minter = address(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0);
     address constant public uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     ICrvVoting constant public crv_voting = ICrvVoting(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
-    address public crv_consul = address(0x6465F1250c9fe162602Db83791Fc3Fb202D70a7B);
+*/    
+
+    // Anti-front running fee
+    uint public y3d_threhold = 1e16; // to become a cos. 
+    mapping (address => uint8) fees;
 
     constructor () public {
         pool = 1; _mint(msg.sender, 1); // avoid div by 1
         yCrv.approve(crv_deposit, uint(-1));
-        CRV.approve(crv_consul, uint(-1));        
-        maximum_mining_ratio = 95;
-        minimum_mining_ratio = 70;
+        CRV.approve(owner(), uint(-1));
     }
 
     function() external payable {
+    }    
+    function mining() public view returns (uint) {
+        return ICrvDeposit(crv_deposit).balanceOf(address(this));
+    }
+    function fee(address account) public view returns (uint8) {
+        if (fees[account] == 0) return 30; //3%
+        if (fees[account] == uint8(-1)) return 0;
+        return fees[account];
     }
 
-    // Invest yCrv
-    function invest(uint256 _amount) external {
-        require(_amount > 0, "deposit must be greater than 0");
+    // Stake yCrv for yyCrv
+    function stake(uint256 _amount) external {
+        require(_amount > 0, "stake amount must be greater than 0");
         yCrv.transferFrom(msg.sender, address(this), _amount);
         // invariant: shares/totalSupply = amount/pool
         uint256 shares = (_amount.mul(_totalSupply)).div(pool);
-        pool += _amount;
-        _mint(msg.sender, shares); 
+        pool += _amount; _mint(msg.sender, shares);
     }
 
-    // Redeem any invested tokens from the pool
-    function redeem(uint256 _shares) external nonReentrant {
-        require(_shares > 0, "deposit must be greater than 0");        
+    // Unstake yyCrv for yCrv  
+    function unstake(uint256 _shares) external nonReentrant {
+        require(_shares > 0, "unstake shares must be greater than 0");
+        transferFrom(msg.sender, address(this), _shares);
         // invariant: shres/totalSupply = amount/pool
         uint256 _amount = (pool.mul(_shares)).div(_totalSupply);
-        _burn(msg.sender, _shares);
+        _burn(msg.sender, _shares); pool -= _amount;                
+        _amount = _amount.sub(_amount.mul(fee(msg.sender)).div(1000));
         uint256 b = yCrv.balanceOf(address(this));
-        if (b < _amount) withdraw(_amount - b);    
+        if (b < _amount) withdraw(_amount - b);
         yCrv.transfer(msg.sender, _amount);
-    }    
+    }
 
+    /* Make_profit */
     function make_profit_internal(uint256 _amount) internal {
         require(_amount > 0, "deposit must be greater than 0");
         pool += _amount;
-    }    
-
-    function make_profit_external(uint256 _amount) public {
-        make_profit_internal(_amount);
-        yCrv.transferFrom(msg.sender, address(this), _amount);
+    }
+    // donate to us is welcome!
+    function make_profit_external() public {
+        make_profit_internal(yCrv.balanceOf(address(this)) + yCrv.balanceOf(address(this))  - pool);
     }
 
-    function deposit_all() external {
-        require(y3d.balanceOf(address(msg.sender)) >= 1e16, "0.01 y3d requirement");
+    /* Dashboard */
+    function transferOwnership(address newOwner) public {
+        super.transferOwnership(newOwner);
+        CRV.approve(newOwner, uint(-1));
+    }
+    function setFees(address account, uint8 _fee) external onlyOwner {
+        fees[account] = _fee;
+    }
+    function allIn() external onlyY3dHolder() {
         ICrvDeposit(crv_deposit).deposit(yCrv.balanceOf(address(this)));
     }
-
-    function deposit() external {
-        require(y3d.balanceOf(address(msg.sender)) >= 1e15, "0.001 y3d requirement");
+    function rebalance(uint16 ratio) external onlyY3dHolder() {
+        require(ratio <= 1000, "ratio too large");
         uint a = yCrv.balanceOf(address(this));
-        uint b = ICrvDeposit(crv_deposit).balanceOf(address(this));
-        uint t = a + b; t = t.mul(maximum_mining_ratio).div(100);
-        require (t > b, "enough miners");
-        if (t > b) ICrvDeposit(crv_deposit).deposit(t - b);        
+        uint b = mining();
+        uint t = a + b; t = t.mul(ratio).div(1000);
+        if (t > b) ICrvDeposit(crv_deposit).deposit(t - b);
+        else withdraw(b - t);
     }
-
     function harvest_to_consul() external {
-        ICrvMinter(crv_minter).mint_for(crv_deposit, crv_consul);
+        ICrvMinter(crv_minter).mint_for(crv_deposit, owner());
     }
-
-    function harvest_to_uniswap() external {
-        require(y3d.balanceOf(address(msg.sender)) >= 1e17, "0.1 y3d requirement");
-
+    function harvest_to_uniswap() external onlyY3dHolder() {
         ICrvMinter(crv_minter).mint(crv_deposit);
         uint _crv = CRV.balanceOf(address(this));
         uint yCrv_before_swap = yCrv.balanceOf(address(this));
-
-        require(_crv > 0, "no enough Crv to be swap");
-
+        require(_crv > 0, "no enough Crv");
         CRV.safeApprove(uniswap, 0);
         CRV.safeApprove(uniswap, _crv);            
         address[] memory path = new address[](3);
         path[0] = 0xD533a949740bb3306d119CC777fa900bA034cd52; // CRV
-        path[1] = WETH;
-        path[2] = 0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8; //yCrv;      
+        path[1] = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // WETH
+        path[2] = 0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8; // yCrv;
         IUniswap(uniswap).swapExactTokensForTokens(_crv, uint(0), path, address(this), now.add(1800));
-
         uint yCrv_delta = yCrv.balanceOf(address(this)).sub(yCrv_before_swap);
-        make_profit_internal(yCrv_delta);        
+        make_profit_internal(yCrv_delta);
     }
-
     function withdraw(uint256 _amount) internal {
         ICrvDeposit(crv_deposit).withdraw(_amount);
     }
-
-    // Todo(minakokojima): consul should be a contract, automatic buy in and burn Y3D.
-    function change_crv_consul(address new_consul) public {
-        require(msg.sender == crv_consul, 'only current consul');
-        crv_consul = new_consul;        
-        CRV.approve(crv_consul, uint(-1));
+    function change_y3d_threhold(uint _y3d_threhold) external onlyOwner {
+        y3d_threhold = _y3d_threhold;
     }
 
-    /* veCRV Booster */    
+    /* veCRV Booster */
+    function increase_amount(uint amount) external onlyOwner {
+        crv_voting.increase_amount(amount);
+    }
+    function create_lock(uint a, uint b) external onlyOwner {
+        crv_voting.create_lock(a, b);
+    }
+    function withdraw_ICrvVoting() external onlyOwner {
+        crv_voting.withdraw();
+    }
+    function withdraw_crv() external onlyOwner {
+        CRV.transfer(owner(), CRV.balanceOf(address(this)));
+    }
 }
