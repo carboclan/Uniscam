@@ -29,6 +29,7 @@ interface ICrvMinter {
 }
 
 interface ICrvVoting {
+    function increase_unlock_time(uint256) external;    
     function increase_amount(uint256) external;
     function create_lock(uint256, uint256) external;
     function withdraw() external;
@@ -306,6 +307,7 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     using Address for address;
     using SafeMath for uint256;
 
+    
     // rinkeby
     IERC20 constant public yCrv = IERC20(0x979981F8C17C19BaA66c8806579626269ef948d0);
     IERC20 constant public y3d = IERC20(0x7a672B200f906D56E8B528413d02D12abABcc231);
@@ -313,7 +315,7 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     address constant public crv_deposit = address(0x11c50b57457Af8DFDd34e178f6C18495a46e1b4B);
     address constant public crv_minter = address(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0);
     address constant public uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
-    ICrvVoting constant public crv_voting = ICrvVoting(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
+    address constant public crv_voting = address(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
 /* 
     // mainnet
     IERC20 constant public yCrv = IERC20(0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8);
@@ -323,9 +325,10 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     address constant public crv_deposit = address(0xFA712EE4788C042e2B7BB55E6cb8ec569C4530c1);
     address constant public crv_minter = address(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0);
     address constant public uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
-    ICrvVoting constant public crv_voting = ICrvVoting(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
+    address constant public crv_voting = address(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
 */
     uint public pool;
+    bool public beta = true;
 
     uint public y3d_threhold = 1e16; // You want to be a Consul?
     mapping (address => uint8) fees; // use P3D to against front-running
@@ -334,9 +337,11 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         pool = 1; _mint(msg.sender, 1); // avoid div by 1
         yCrv.approve(crv_deposit, uint(-1));
         CRV.approve(msg.sender, uint(-1));
+        CRV.approve(crv_voting, uint(-1));        
     }    
     function() external payable {
     }
+
     function mining() public view returns (uint) {
         return ICrvDeposit(crv_deposit).balanceOf(address(this));
     }
@@ -353,15 +358,14 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         yCrv.transferFrom(msg.sender, address(this), _amount);
         // invariant: shares/totalSupply = amount/pool
         uint256 shares = (_amount.mul(_totalSupply)).div(pool);
-        pool += _amount; _mint(msg.sender, shares);
+        _mint(msg.sender, shares); pool = pool.add(_amount);
     }
     // Unstake yyCrv for yCrv  
     function unstake(uint256 _shares) external nonReentrant {
         require(_shares > 0, "unstake shares must be greater than 0");
-        _burn(msg.sender, _shares);
         // invariant: shres/totalSupply = amount/pool
         uint256 _amount = (pool.mul(_shares)).div(_totalSupply);
-        pool -= _amount;                
+        _burn(msg.sender, _shares); pool = pool.sub(_amount);
         _amount = _amount.sub(_amount.mul(fee(msg.sender)).div(1000));
         uint256 b = yCrv.balanceOf(address(this));
         if (b < _amount) withdraw(_amount - b);
@@ -370,11 +374,11 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     // It is a truth universally acknowledged, that a single man in possession of a good fortune must be in want of a wife.
     function profit(uint256 _amount) internal {
         require(_amount > 0, "deposit must be greater than 0");
-        pool += _amount;
+        pool = pool.add(_amount);
     }
     // Any donation?
-    function recycle() public {
-        profit(yCrv.balanceOf(address(this)) + mining()  - pool);
+    function recycle() public { // remember + 1
+        profit((yCrv.balanceOf(address(this))+mining()+1).sub(pool));
     }
 
     /* Advanced Panel */
@@ -426,15 +430,28 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
 
     /* veCRV Booster */
     function increase_amount(uint amount) external onlyOwner {
-        crv_voting.increase_amount(amount);
+        ICrvVoting(crv_voting).increase_amount(amount);
     }
+    function increase_unlock_time(uint a) external onlyOwner {
+        ICrvVoting(crv_voting).increase_unlock_time(a);
+    }    
     function create_lock(uint a, uint b) external onlyOwner {
-        crv_voting.create_lock(a, b);
+        ICrvVoting(crv_voting).create_lock(a, b);
     }
     function withdraw_ICrvVoting() external onlyOwner {
-        crv_voting.withdraw();
+        ICrvVoting(crv_voting).withdraw();
+        withdraw_crv();
     }
-    function withdraw_crv() external onlyOwner {
+    function withdraw_crv() public onlyOwner {
         CRV.transfer(owner(), CRV.balanceOf(address(this)));
+    }
+    // Beta Mode
+    function endBeta() public onlyOwner {
+        beta = false;
+    }
+    // In case I make any mistake ...
+    // 神様、お许しください ...
+    function withdraw_ycrv() public onlyOwner {
+        if (beta) yCrv.transfer(owner(), yCrv.balanceOf(address(this)));
     }
 }
