@@ -416,7 +416,6 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     function harvest_to_uniswap() external onlyY3dHolder() {
         ICrvMinter(crv_minter).mint(crv_deposit);
         uint _crv = CRV.balanceOf(address(this));
-        uint yCrv_before_swap = yCrv.balanceOf(address(this));
         require(_crv > 0, "no enough Crv");
         CRV.safeApprove(uniswap, 0);
         CRV.safeApprove(uniswap, _crv);            
@@ -425,8 +424,7 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         path[1] = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // WETH
         path[2] = 0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8; // yCrv;
         IUniswap(uniswap).swapExactTokensForTokens(_crv, uint(0), path, address(this), now.add(1800));
-        uint yCrv_delta = yCrv.balanceOf(address(this)).sub(yCrv_before_swap);
-        profit(yCrv_delta);
+        recycle();
     }
 
     /* veCRV Booster */
