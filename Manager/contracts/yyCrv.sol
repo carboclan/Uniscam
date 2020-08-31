@@ -2,7 +2,7 @@
  *Submitted for verification at Etherscan.io on 2020-02-01
 */
 
-pragma solidity ^0.5.17;
+pragma solidity ^0.5.16;
 
 pragma experimental ABIEncoderV2;
 
@@ -307,17 +307,6 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     using Address for address;
     using SafeMath for uint256;
     
-    // rinkeby
-    IERC20 constant public yCrv = IERC20(0x979981F8C17C19BaA66c8806579626269ef948d0);
-    IERC20 constant public y3d = IERC20(0x7a672B200f906D56E8B528413d02D12abABcc231);
-    IERC20 constant public CRV = IERC20(0xFB75D28518728c2A7046FDc952eEF33dFec92289);
-    address constant public crv_deposit = address(0x11c50b57457Af8DFDd34e178f6C18495a46e1b4B);
-    address constant public crv_minter = address(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0);
-    address constant public uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
-    address constant public crv_voting = address(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
-
-    /*
-    // mainnet
     IERC20 constant public yCrv = IERC20(0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8);
     IERC20 constant public y3d = IERC20(0xc7fD9aE2cf8542D71186877e21107E1F3A0b55ef);
     IERC20 constant public CRV = IERC20(0xD533a949740bb3306d119CC777fa900bA034cd52);
@@ -326,7 +315,6 @@ contract yyCrv is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     address constant public crv_minter = address(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0);
     address constant public uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     address constant public crv_voting = address(0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2);
-    */
 
     uint public pool;
     bool public beta = true;
