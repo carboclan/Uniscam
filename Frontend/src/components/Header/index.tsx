@@ -145,10 +145,14 @@ export default function Header() {
         <HeaderElement>
           <Title href=".">
             <UniIcon>
-              <img style={{ "height": "32px" }} src={isDark ? LogoDark : Logo} alt="logo" />
+              <img style={{ height: '32px' }} src={isDark ? LogoDark : Logo} alt="logo" />
             </UniIcon>
             <TitleText>
-              <img style={{ marginLeft: '4px', marginTop: '4px', "height": "22px" }} src={isDark ? WordmarkDark : Wordmark} alt="logo" />
+              <img
+                style={{ marginLeft: '4px', marginTop: '4px', height: '22px' }}
+                src={isDark ? WordmarkDark : Wordmark}
+                alt="logo"
+              />
             </TitleText>
           </Title>
         </HeaderElement>

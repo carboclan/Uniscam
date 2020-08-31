@@ -2,7 +2,8 @@
  *Submitted for verification at Etherscan.io on 2020-02-01
 */
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.5.17;
+
 pragma experimental ABIEncoderV2;
 
 interface IERC20 {
@@ -14,6 +15,28 @@ interface IERC20 {
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+interface ICrvDeposit {
+    function deposit(uint256) external;
+    function withdraw(uint256) external;
+    function balanceOf(address) external view returns (uint256);
+    function claimable_tokens(address) external view returns (uint256);
+}
+
+interface ICrvMinter {
+    function mint(address) external;
+    function mint_for(address, address) external;
+}
+
+interface ICrvVoting {
+    function increase_amount(uint256) external;
+    function create_lock(uint256, uint256) external;
+    function withdraw() external;
+}
+
+interface IUniswap {
+    function swapExactTokensForTokens(uint, uint, address[] calldata, address, uint) external;
 }
 
 contract Context {
@@ -104,15 +127,10 @@ contract ERC20 is Context, IERC20 {
 }
 
 contract ERC20Detailed is IERC20 {
-    string private _name;
-    string private _symbol;
-    uint8 private _decimals;
+    string constant private _name = "yyCrv";
+    string constant private _symbol = "yyCrv";
+    uint8 constant private _decimals = 18;
 
-    constructor (string memory name, string memory symbol, uint8 decimals) public {
-        _name = name;
-        _symbol = symbol;
-        _decimals = decimals;
-    }
     function name() public view returns (string memory) {
         return _name;
     }
@@ -278,199 +296,33 @@ library SafeERC20 {
     }
 }
 
-interface Compound {
-    function mint ( uint256 mintAmount ) external returns ( uint256 );
-    function redeem(uint256 redeemTokens) external returns (uint256);
-    function exchangeRateStored() external view returns (uint);
-}
+contract crv_deposit is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
 
-// Solidity Interface
+    using SafeERC20 for IERC20;
+    using Address for address;
+    using SafeMath for uint256;
 
-interface ICurveFi {
+    uint256 public pool;
 
-  function get_virtual_price() external view returns (uint256);
-  function get_dy(
-    int128 i,
-    int128 j,
-    uint256 dx
-  ) external view returns (uint256);
-  function get_dy_underlying(
-    int128 i,
-    int128 j,
-    uint256 dx
-  ) external view returns (uint256);
-  function coins(int128 arg0) external view returns (address);
-  function underlying_coins(int128 arg0) external view returns (address);
-  function balances(int128 arg0) external view returns (uint256);
+    // rinkeby
+    IERC20 constant public yCrv = IERC20(0x979981F8C17C19BaA66c8806579626269ef948d0);    
+    IERC20 constant public CRV = IERC20(0xFB75D28518728c2A7046FDc952eEF33dFec92289);
 
-  // 0 = cDAI, 1 - cUSDC
-  function add_liquidity(
-    uint256[2] calldata amounts,
-    uint256 deadline
-  ) external;
-  function exchange(
-    int128 i,
-    int128 j,
-    uint256 dx,
-    uint256 min_dy,
-    uint256 deadline
-  ) external;
-  function exchange_underlying(
-    int128 i,
-    int128 j,
-    uint256 dx,
-    uint256 min_dy,
-    uint256 deadline
-  ) external;
-  function remove_liquidity(
-    uint256 _amount,
-    uint256 deadline,
-    uint256[2] calldata min_amounts
-  ) external;
-  function remove_liquidity_imbalance(
-    uint256[2] calldata amounts,
-    uint256 deadline
-  ) external;
-}
+    uint public y3d_threhold = 1e16; // to become a cos. 
+    mapping (address => uint8) fees;
 
-contract yCRV is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
-  using SafeERC20 for IERC20;
-  using Address for address;
-  using SafeMath for uint256;
+    constructor () public {
+    }
 
-  uint256 public pool;
-  address public token;
-  address public cDAI;
-  address public apr;
-  address public curve;
-  address public curveToken;
-
-  constructor () public ERC20Detailed("yCRV", "cDAI/cUSDC", 18) {
-    token = address(0x6B175474E89094C44Da98b954EedeAC495271d0F);
-    curve = address(0x2e60CF74d81ac34eB21eEff58Db4D385920ef419);
-    curveToken = address(0x3740fb63ab7a09891d7c0d4299442A551D06F5fD);
-    approveToken();
-  }
-
-  function set_new_TOKEN(address _new_TOKEN) public onlyOwner {
-      token = _new_TOKEN;
-  }
-  function set_new_curveToken(address _new_set_new_curveToken) public onlyOwner {
-      curveToken = _new_set_new_curveToken;
-  }
-
-  function() external payable {
-
-  }
-
-  function approveToken() public {
-      IERC20(token).approve(cDAI, uint(-1));
-  }
-
-  // Invest ETH
-  function invest(uint256 _amount)
-      external
-      nonReentrant
-  {
-      require(_amount > 0, "deposit must be greater than 0");
-      pool = calcPoolValueInToken();
-
-      IERC20(token).transferFrom(msg.sender, address(this), _amount);
-      // Got DAI
-      supplyCompound(_amount);
-      ICurveFi(curve).add_liquidity([balanceCompound(),0],now.add(1800));
-
-      // Calculate pool shares
-      uint256 shares = 0;
-      if (pool == 0) {
-        shares = _amount;
-        pool = _amount;
-      } else {
-        shares = (_amount.mul(_totalSupply)).div(pool);
-      }
-      pool = calcPoolValueInToken();
-      _mint(msg.sender, shares);
-  }
-
-  // Invest self eth from external profits
-  function investSelf()
-      external
-      nonReentrant
-      onlyOwner
-  {
-      uint b = IERC20(token).balanceOf(address(this));
-      require(b > 0, "deposit must be greater than 0");
-      supplyCompound(b);
-      ICurveFi(curve).add_liquidity([balanceCompound(),0],now.add(1800));
-      pool = calcPoolValueInToken();
-  }
-
-  function crvapr() public view returns (uint256) {
-    uint256 blocks = block.number - 9325883;
-    uint256 price = ICurveFi(curve).get_virtual_price().sub(1e18);
-    return price.mul(2102400).div(blocks);
-  }
-
-  function calcPoolValueInToken() public view returns (uint) {
-    uint256 price = ICurveFi(curve).get_virtual_price();
-    uint256 supply = IERC20(curveToken).balanceOf(address(this));
-    uint256 dai = IERC20(token).balanceOf(address(this));
-    return price.mul(supply).div(1e18).add(dai);
-  }
-
-  function withdraw(uint256 _amount) internal {
-    // _amount is amount of yCRV
-    // exchangeRateStored.div(1e18).mul(_amountOfCDai) = DAI
-    uint256 dai = _amount.mul(getPricePerFullShare()).div(1e18);
-    uint256 compoundDai = dai.mul(1e18).div(Compound(cDAI).exchangeRateStored());
-    ICurveFi(curve).remove_liquidity_imbalance([compoundDai,0], now.add(1800));
-    withdrawCompound(compoundDai);
-  }
-
-  function getPricePerFullShare() public view returns (uint) {
-    uint _pool = calcPoolValueInToken();
-    return _pool.mul(1e18).div(_totalSupply);
-  }
-
-  // Redeem any invested tokens from the pool
-  function redeem(uint256 _shares)
-      external
-      nonReentrant
-  {
-      require(_shares > 0, "withdraw must be greater than 0");
-
-      uint256 ibalance = balanceOf(msg.sender);
-      require(_shares <= ibalance, "insufficient balance");
-
-      // Could have over value from cTokens
-      pool = calcPoolValueInToken();
-      // Calc eth to redeem before updating balances
-      uint256 r = (pool.mul(_shares)).div(_totalSupply);
-
-
-      _balances[msg.sender] = _balances[msg.sender].sub(_shares, "redeem amount exceeds balance");
-      _totalSupply = _totalSupply.sub(_shares);
-
-      emit Transfer(msg.sender, address(0), _shares);
-
-      // Check balance
-      uint256 b = IERC20(token).balanceOf(address(this));
-      if (b < r) {
-        withdraw(r);
-      }
-
-      IERC20(token).transfer(msg.sender, r);
-      pool = calcPoolValueInToken();
-  }
-
-  // incase of half-way error
-  function inCaseTokenGetsStuck(IERC20 _TokenAddress) onlyOwner public {
-      uint qty = _TokenAddress.balanceOf(address(this));
-      _TokenAddress.transfer(msg.sender, qty);
-  }
-  // incase of half-way error
-  function inCaseETHGetsStuck() onlyOwner public{
-      (bool result, ) = msg.sender.call.value(address(this).balance)("");
-      require(result, "transfer of ETH failed");
-  }
+    function() external payable {
+    }    
+    function deposit(uint a) external {
+        yCrv.transferFrom(msg.sender, address(this), a);
+        _mint(msg.sender, a);
+    }
+    function withdraw(uint a) external {
+        _burn(msg.sender, a);
+        yCrv.transfer(msg.sender, a);
+        CRV.transfer(msg.sender, a);
+    }
 }
