@@ -1,7 +1,7 @@
 
 Frontend/src/constants/index.ts:
    5  
-   6: export const ROUTER_ADDRESS = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
+   6: export const ROUTER_ADDRESS = '0x4D33eCC2eBE4EA5Df99Ea4878De164416bD13295' // replaced by Frank
    7  
 
   12  
@@ -45,7 +45,7 @@ Frontend/src/state/swap/hooks.ts:
   91  const BAD_RECIPIENT_ADDRESSES: string[] = [
   92:   '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f', // v2 factory
   93:   '0xf164fC0Ec4E93095b804a4795bBe1e041497b92a', // v2 router 01
-  94:   '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D' // v2 router 02
+  94:   '0x4D33eCC2eBE4EA5Df99Ea4878De164416bD13295' // v2 router 02
   95  ]
 
 Frontend/src/utils/resolveENSContentHash.ts:
