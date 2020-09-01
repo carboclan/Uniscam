@@ -18,6 +18,7 @@ import RemoveLiquidity from './RemoveLiquidity'
 import { RedirectOldRemoveLiquidityPathStructure } from './RemoveLiquidity/redirects'
 import Swap from './Swap'
 import { RedirectPathToSwapOnly, RedirectToSwap } from './Swap/redirects'
+import './App.css'
 
 const AppWrapper = styled.div`
   display: flex;
@@ -83,6 +84,9 @@ export default function App() {
               </Switch>
             </Web3ReactManager>
             <Marginer />
+            <div className="grid-wrapper no-overflow">
+              <div className="m-grid is-animating"></div>
+            </div>
           </BodyWrapper>
         </AppWrapper>
       </HashRouter>

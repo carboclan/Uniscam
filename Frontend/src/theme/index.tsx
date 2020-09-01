@@ -10,7 +10,6 @@ import { Text, TextProps } from 'rebass'
 import { Colors } from './styled'
 import MountainLeftImg from '../assets/images/background/mountain-left.png'
 import MountainRightImg from '../assets/images/background/mountain-right.png'
-import MatrixImg from '../assets/images/background/matrix.svg'
 
 export * from './components'
 
@@ -218,19 +217,16 @@ body {
     url(${MountainRightImg}),
     linear-gradient(#193CB1, #193CB1),
     linear-gradient(#32C5FF, #32C5FF),
-    url(${MatrixImg}),
     linear-gradient(#1B1B1B, #1B1B1B);
   background-size: auto calc(100% * 0.414814814814815) /* MountainLeftImg */,
     auto calc(100% * 0.414814814814815) /* MountainRightImg */,
     100% 50% /* Top background color */,
     100% 4px /* Blue line */,
-    auto 50% /* MatrixImg */,
     100% 50% /* Bottom background color */;
   background-position: top calc(50% - (100vh * 0.414814814814815 / 2)) left /* MountainLeftImg */,
     top calc(50% - (100vh * 0.414814814814815 / 2)) right /* MountainRightImg */,
     top center /* Top background color */,
     top calc(50% + 4px) center /* Blue line */,
-    bottom center /* MatrixImg */,
     bottom center /* Bottom background color */;
 }
 
@@ -240,13 +236,11 @@ body {
       auto calc(100% * 0.414814814814815) /* MountainRightImg */,
       100% 50% /* Top background color */,
       100% 4px /* Blue line */,
-      100% auto /* MatrixImg */,
       100% 50% /* Bottom background color */;
     background-position: top calc(50% - (100vh * 0.414814814814815 / 2)) left /* MountainLeftImg */,
       top calc(50% - (100vh * 0.414814814814815 / 2)) right /* MountainRightImg */,
       top center /* Top background color */,
       top calc(50% + 4px) center /* Blue line */,
-      top 50vh center /* MatrixImg */,
       bottom center /* Bottom background color */;
   }
 }
