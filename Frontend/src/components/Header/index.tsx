@@ -7,7 +7,6 @@ import styled from 'styled-components'
 
 import Logo from '../../assets/svg/logo.svg'
 import LogoDark from '../../assets/svg/logo_white.svg'
-import Wordmark from '../../assets/svg/wordmark.svg'
 import WordmarkDark from '../../assets/svg/wordmark_white.svg'
 import { useActiveWeb3React } from '../../hooks'
 import { useDarkModeManager } from '../../state/user/hooks'
@@ -145,12 +144,12 @@ export default function Header() {
         <HeaderElement>
           <Title href=".">
             <UniIcon>
-              <img style={{ height: '32px' }} src={isDark ? LogoDark : Logo} alt="logo" />
+              <img style={{ marginLeft: '6px', height: '32px' }} src={isDark ? LogoDark : Logo} alt="logo" />
             </UniIcon>
             <TitleText>
               <img
                 style={{ marginLeft: '4px', marginTop: '4px', height: '22px' }}
-                src={isDark ? WordmarkDark : Wordmark}
+                src={WordmarkDark}
                 alt="logo"
               />
             </TitleText>
