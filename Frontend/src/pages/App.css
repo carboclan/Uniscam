@@ -1,0 +1,27 @@
+.m-grid {
+    position: absolute;
+    top: 53%;
+    margin-top: -75vh;
+    left: 50%;
+    margin-left: -100vw;
+    width: 200vw;
+    height: 150vh;
+    transform: scaleY(0);
+    background-image: linear-gradient(0deg, transparent 24%, rgba(34, 59, 170, 0.5) 25%, rgba(63, 74, 165, 0.9) 26%, transparent 27%, transparent 74%, rgba(34, 59, 170, 0.5) 75%, rgba(63, 74, 165, 0.9) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(34, 59, 170, 0.75) 25%, rgba(0, 6, 59, 0.25) 26%, transparent 27%, transparent 74%, rgba(34, 59, 170, 0.75) 75%, rgba(0, 6, 59, 0.25) 76%, transparent 77%, transparent);
+    background-size: 50px 50px;
+    z-index: -99;
+}
+
+/* Animation */
+.m-grid.is-animating {
+    animation: fly 3s linear;
+    animation-iteration-count: infinite;
+}
+@keyframes fly {
+    0% { transform: perspective(300px) rotateX(80deg) translateY(0%) }
+    100% { transform: perspective(300px) rotateX(80deg) translateY(50px) }
+}
+
+body {
+    overflow: hidden;
+}
