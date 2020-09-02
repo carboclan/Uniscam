@@ -56,7 +56,7 @@ const Marginer = styled.div`
 `
 
 const GridWrapper = styled.div`
-  z-index: -99
+  z-index: -99;
 `
 
 export default function App() {

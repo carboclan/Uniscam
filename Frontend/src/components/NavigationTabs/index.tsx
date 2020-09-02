@@ -9,7 +9,6 @@ import { RowBetween } from '../Row'
 import QuestionHelper from '../QuestionHelper'
 import PiggybankImg from '../../assets/images/background/piggybank.png'
 
-
 const Tabs = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}
   align-items: center;
@@ -55,23 +54,23 @@ const StyledArrowLeft = styled(ArrowLeft)`
 `
 
 const PiggyBankHackBackground = {
-  "width": "420px",
-  "margin": "-1rem 0 0 -1rem"
+  width: '420px',
+  margin: '-1rem 0 0 -1rem'
 }
 
 export function SwapPoolTabs({ active }: { active: 'swap' | 'pool' }) {
   const { t } = useTranslation()
   return (
     <>
-    <img src={PiggybankImg} style={PiggyBankHackBackground} alt="PiggyBank"/>
-    <Tabs style={{ marginBottom: '20px' }}>
-      <StyledNavLink id={`swap-nav-link`} to={'/swap'} isActive={() => active === 'swap'}>
-        {t('swap')}
-      </StyledNavLink>
-      <StyledNavLink id={`pool-nav-link`} to={'/pool'} isActive={() => active === 'pool'}>
-        {t('pool')}
-      </StyledNavLink>
-    </Tabs>
+      <img src={PiggybankImg} style={PiggyBankHackBackground} alt="PiggyBank" />
+      <Tabs style={{ marginBottom: '20px' }}>
+        <StyledNavLink id={`swap-nav-link`} to={'/swap'} isActive={() => active === 'swap'}>
+          {t('swap')}
+        </StyledNavLink>
+        <StyledNavLink id={`pool-nav-link`} to={'/pool'} isActive={() => active === 'pool'}>
+          {t('pool')}
+        </StyledNavLink>
+      </Tabs>
     </>
   )
 }
