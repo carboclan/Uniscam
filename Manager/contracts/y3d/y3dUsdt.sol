@@ -121,7 +121,8 @@ contract ERC20Detailed is ERC20 {
 contract y3d_usdt is ERC20Detailed {
 
     address constant public uT = address(0xdAC17F958D2ee523a2206206994597C13D831ec7); // usdt, underlying token
-    address constant public yT = address(0x83f798e925BcD4017Eb265844FDDAbb448f1707D); // yUsdt, yToken
+    address constant public yT = address(0x2f08119C6f07c006695E079AAFc638b8789FAf18);    
+//    address constant public yT = address(0x83f798e925BcD4017Eb265844FDDAbb448f1707D); // yUsdt, yToken
     uint save = 1;                                                                    // How many token are saving. = 1 to avoid / 0 error.
     function b() public view returns (uint) {
         IERC20 u = IERC20(uT);
