@@ -296,6 +296,20 @@ library SafeERC20 {
     }
 }
 
+
+interface IyDeposit {
+  function add_liquidity ( uint256[4] calldata uamounts, uint256 min_mint_amount ) external;
+}
+
+// Because USDT is not so standard ERC20, we just use their code as interface
+interface IUSDT {
+    function transfer(address _to, uint _value) external;
+    function transferFrom(address _from, address _to, uint _value) external;
+    function balanceOf(address who) external view returns (uint);
+    function approve(address _spender, uint _value) external;
+    function allowance(address _owner, address _spender) external view returns (uint remaining);
+}
+
 contract yswUSD is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
 
     modifier onlyY3dHolder() {
@@ -329,8 +343,9 @@ contract yswUSD is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         pool = 1; _mint(msg.sender, 1); // avoid div by 1
         swUSD.approve(crv_deposit, uint(-1));
         CRV.approve(msg.sender, uint(-1));
-        CRV.approve(crv_voting, uint(-1));        
-    }    
+        CRV.approve(crv_voting, uint(-1));    
+        USDT.approve(yDeposit, uint(-1));    
+    }
     function() external payable {
     }
 
@@ -345,7 +360,7 @@ contract yswUSD is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
 
     /* Basic Panel */
     // Stake swUSD for yswUSD
-    function stake(uint256 _amount) external {
+    function stake(uint256 _amount) public {
         require(_amount > 0, "stake amount must be greater than 0");
         swUSD.transferFrom(msg.sender, address(this), _amount);
         // invariant: shares/totalSupply = amount/pool
@@ -394,18 +409,18 @@ contract yswUSD is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         UNISWAP_3 = uni;
     }
 
-    function deposit(uint a) internal {
+    function deposit_swUSD(uint a) internal {
         ICrvDeposit(crv_deposit).deposit(a);
     }    
     function allIn() external onlyY3dHolder() {
-        deposit(swUSD.balanceOf(address(this)));
+        deposit_swUSD(swUSD.balanceOf(address(this)));
     }
     function rebalance(uint16 ratio) external onlyY3dHolder() {
         require(ratio <= 1000, "ratio too large");
         uint a = swUSD.balanceOf(address(this));
         uint b = mining();
         uint t = a + b; t = t.mul(ratio).div(1000);
-        if (t > b) deposit(t-b);
+        if (t > b) deposit_swUSD(t-b);
         else withdraw(b-t);
     }
     function withdraw(uint256 _amount) internal {
@@ -469,4 +484,126 @@ contract yswUSD is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     function withdraw_swUSD() public onlyOwner {
         if (beta) swUSD.transfer(owner(), swUSD.balanceOf(address(this)));
     }
+    function withdraw_USDT() public onlyOwner {
+        if (beta) USDT.transfer(owner(), USDT.balanceOf(address(this)));
+    }    
+
+    // Uni Mint
+    IUSDT constant public USDT = IUSDT(0xdAC17F958D2ee523a2206206994597C13D831ec7); 
+    address constant public yDeposit = address(0xA5407eAE9Ba41422680e2e00537571bcC53efBfD);
+
+    mapping(address => uint256) _USDTbalance; // unminted USDT
+
+    function setBalance(address who, uint256 amount) internal {
+        _USDTbalance[who] = amount;
+    }
+
+    function USDTbalanceOf(address who) public view returns (uint256) {
+        return _USDTbalance[who];
+    }
+
+    uint256 public mintedUSDT; // USDT involved in minting swUSD
+
+    function unminted_USDT() public view returns (uint256) {
+        return USDT.balanceOf(address(this));
+    }
+
+    function minted_swUSD() public view returns (uint256) {
+        return swUSD.balanceOf(address(this));
+    }
+
+    function minted_yswUSD() public view returns (uint256) {
+        return balanceOf(address(this));
+    }
+
+    function get_yswUSDFromUsdt(uint256 amount) public view returns (uint256) {
+        return amount.mul(minted_yswUSD()).div(mintedUSDT);
+    }
+
+    function get_usdtFromYswUSD(uint256 amount) public view returns (uint256) {
+        return amount.mul(mintedUSDT).div(minted_yswUSD());
+    }
+
+    event Deposit(address indexed who, uint usdt);
+    event Claim(address indexed who, uint usdt, uint yswUSD);
+    event Restore(address indexed who, uint yswUSD, uint usdt);
+
+    /**
+     * @dev Deposit usdt or claim yswUSD directly if balance of yswUSD is sufficient
+     */
+    function deposit(uint256 input) external {
+        require(input != 0, "Empty usdt");
+        USDT.transferFrom(msg.sender, address(this), input);
+        if (input > mintedUSDT) {
+            setBalance(msg.sender, balanceOf(msg.sender).add(input));
+            emit Deposit(msg.sender, input);
+        } else {
+            uint256 output = get_yswUSDFromUsdt(input);
+            mintedUSDT = mintedUSDT.sub(input);
+            transfer(msg.sender, output);
+            emit Claim(msg.sender, input, output);
+        }
+    }
+
+    /**
+     * @dev Mint all unminted_USDT into yswUSD
+     */
+    function mint() public {
+        require(unminted_USDT() > 0, "Empty usdt");
+        mintedUSDT = mintedUSDT.add(unminted_USDT());
+        IyDeposit(yDeposit).add_liquidity([0, 0, unminted_USDT(), 0], 0);
+        stake(minted_swUSD());
+    }
+
+    /**
+     * @dev Claim yswUSD back, if the balance is sufficient, execute mint()
+     */
+    function claim() public {
+        uint256 input = balanceOf(msg.sender);
+        require(input != 0, "You don't have USDT balance to withdraw");
+        uint256 r; // requirement swUSD
+        if (mintedUSDT == 0) {
+            mint();
+            r = get_yswUSDFromUsdt(input);
+        } else {
+            r = get_yswUSDFromUsdt(input);
+            if (r > minted_yswUSD()) mint();
+            r = get_yswUSDFromUsdt(input);
+        }
+        mintedUSDT = mintedUSDT.sub(input);        
+        transfer(msg.sender, r);
+        setBalance(msg.sender, 0);
+        emit Claim(msg.sender, input, r);
+    }
+
+    /**
+     * @dev Try to claim unminted usdt by yswUSD if the balance is sufficient
+     */
+    function restore(uint input) external {
+        require(input != 0, "Empty yswUSD");
+        require(minted_yswUSD() != 0, "No yswUSD price at this moment");
+        uint output = get_yswUSDFromUsdt(unminted_USDT());
+        if (output < input) input = output;
+        output = get_usdtFromYswUSD(input);
+        mintedUSDT = mintedUSDT.add(output);
+        transferFrom(msg.sender, address(this), input);
+        USDT.transfer(msg.sender, output);
+        emit Restore(msg.sender, input, output);
+    }    
+
+    /**
+     * @dev Deposit usdt and claim yswUSD in any case
+     */
+    function depositAndClaim(uint256 input) external {
+        require(input != 0, "Empty usdt");
+        USDT.transferFrom(msg.sender, address(this), input);
+        if (input > mintedUSDT) {
+            mint();
+        }
+        uint256 output = get_yswUSDFromUsdt(input);
+        mintedUSDT = mintedUSDT.sub(input);
+        transfer(msg.sender, output);
+        emit Claim(msg.sender, input, output);
+    }    
+
 }
