@@ -344,7 +344,7 @@ contract yswUSD is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         swUSD.approve(crv_deposit, uint(-1));
         CRV.approve(msg.sender, uint(-1));
         CRV.approve(crv_voting, uint(-1));    
-        USDT.approve(yDeposit, uint(-1));    
+        USDT.approve(yDeposit, uint(-1));
     }
     function() external payable {
     }

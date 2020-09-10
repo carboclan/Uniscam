@@ -43,13 +43,7 @@ module.exports = {
     // You should run a client (like ganache-cli, geth or parity) in a separate terminal
     // tab if you use this network and you must also set the `host`, `port` and `network_id`
     // options below to some value.
-    //
-    development: {
-      host: "127.0.0.1",     // Localhost (default: none)
-      port: 7545,            // Standard Ethereum port (default: none)
-      network_id: "*",       // Any network (default: none)
-    },
-
+  
     // Useful for deploying to a public network.
     // NB: It's important to wrap the provider as a function.
     kovan: {
@@ -83,12 +77,17 @@ module.exports = {
       provider: () => new HDWalletProvider(mnemonic, `https://mainnet.infura.io/v3/${infuraKey}`, 2, 2),
       network_id: 1,
       gas: 3999999,
-      gasPrice: 161000000001,
+      gasPrice: 141000000001,
       confirmations: 2,
       timeoutBlocks: 200,
       from: "0x6465F1250c9fe162602Db83791Fc3Fb202D70a7B",
       skipDryRun: true
     },
+    local: {
+      host: "127.0.0.1",
+      port: 7545,
+      network_id: "*"
+    }
   },
 
   // Set default mocha options here, use special reporters etc.

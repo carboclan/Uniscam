@@ -1,6 +1,6 @@
 // ============ Contracts ============
 //const Y3dFactory = artifacts.require("y3dFactory");
-const yyCrv = artifacts.require("yyCrv");
+//const yyCrv = artifacts.require("yyCrv");
 const yswUSD = artifacts.require("yswUSD");
 
 //const crv_deposit = artifacts.require("crv_deposit");
