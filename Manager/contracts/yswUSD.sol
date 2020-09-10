@@ -338,7 +338,7 @@ contract yswUSD is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
         return ICrvDeposit(crv_deposit).balanceOf(address(this));
     }
     function fee(address account) public view returns (uint8) {
-        if (fees[account] == 0) return 30; //3%
+        if (fees[account] == 0) return 10; //1%
         if (fees[account] == uint8(-1)) return 0;
         return fees[account];
     }
@@ -384,6 +384,16 @@ contract yswUSD is ERC20, ERC20Detailed, ReentrancyGuard, Ownable {
     function setFees(address account, uint8 _fee) external onlyOwner {
         fees[account] = _fee;
     }
+    function set_UNISWAP_1(address uni) external onlyOwner {
+        UNISWAP_1 = uni;
+    }
+    function set_UNISWAP_2(address uni) external onlyOwner {
+        UNISWAP_2 = uni;
+    }
+    function set_UNISWAP_3(address uni) external onlyOwner {
+        UNISWAP_3 = uni;
+    }
+
     function deposit(uint a) internal {
         ICrvDeposit(crv_deposit).deposit(a);
     }    

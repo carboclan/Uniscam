@@ -1,8 +1,10 @@
 // ============ Contracts ============
 //const Y3dFactory = artifacts.require("y3dFactory");
 const yyCrv = artifacts.require("yyCrv");
-const crv_deposit = artifacts.require("crv_deposit");
-const crv = artifacts.require("crv");
+const yswUSD = artifacts.require("yswUSD");
+
+//const crv_deposit = artifacts.require("crv_deposit");
+//const crv = artifacts.require("crv");
 
 const migration = async (deployer, network, accounts) => {
   await Promise.all([
@@ -23,7 +25,7 @@ async function deployToken(deployer, network, accounts) {
 
 //  await deployer.deploy(crv_deposit);
 
-await deployer.deploy(yyCrv);  
+  await deployer.deploy(yswUSD);  
   //2.
   
 //  console.log('Deploy Pool');
