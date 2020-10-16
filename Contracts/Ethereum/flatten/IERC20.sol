@@ -1,3 +1,5 @@
+// Root file: contracts/interfaces/IERC20.sol
+
 pragma solidity =0.6.12;
 
 interface IERC20 {

@@ -1,3 +1,5 @@
+// Root file: contracts/interfaces/IUniswapV2Factory.sol
+
 pragma solidity =0.6.12;
 
 interface IUniswapV2Factory {
