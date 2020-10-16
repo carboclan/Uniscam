@@ -1,0 +1,17 @@
+{
+  "devDependencies": {
+    "@openzeppelin/contracts": "^3.2.0",
+    "ethereum-waffle": "^3.1.1"
+  },
+  "name": "bestswap-contract",
+  "version": "1.0.0",
+  "description": "Solidity Contract of Bestswap",
+  "main": "index.js",
+  "repository": "https://github.com/nekomeowww/bestswap-contract.git",
+  "author": "Ayaka Neko <neko@ayaka.moe>",
+  "license": "MIT",
+  "scripts": {
+    "build": "waffle",
+    "flatten": "npx waffle flatten"
+  }
+}
