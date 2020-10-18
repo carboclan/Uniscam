@@ -528,7 +528,7 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
     function b1() public view returns (uint b) {
         IERC20 u = IERC20(token1);
         b = u.balanceOf(address(this));
-        if (yToken0 != address(0)) {
+        if (yToken1 != address(0)) {
             IyToken y = IyToken(yToken1);   
             b = b.add(y.balance().mul(y.balanceOf(address(this))).div(y.totalSupply()));
         }
@@ -587,7 +587,7 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
     }
     function _withdrawAll1() internal {
         IERC20 y = IERC20(yToken1);
-        _withdraw0(y.balanceOf(address(this)));
+        _withdraw1(y.balanceOf(address(this)));
     }    
     function withdraw0(uint s) external onlyOwner() {
         _withdraw0(s);
