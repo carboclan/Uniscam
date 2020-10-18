@@ -4,17 +4,13 @@ import './UniswapV2ERC20.sol';
 import './libraries/Math.sol';
 import './libraries/UQ112x112.sol';
 import './interfaces/IERC20.sol';
+import './interfaces/IyToken.sol';
 import './interfaces/IUniswapV2Factory.sol';
 import './interfaces/IUniswapV2Callee.sol';
 
 interface IMigrator {
     // Return the desired amount of liquidity token that the migrator wants.
     function desiredLiquidity() external view returns (uint256);
-}
-
-interface IyToken {
-    function deposit(uint) external;
-    function withdraw(uint) external;
 }
 
 contract Ownable {
@@ -51,7 +47,7 @@ contract Ownable {
 }
 
 contract UniswapV2Pair is UniswapV2ERC20, Ownable {
-    using SafeMathUniswap  for uint;
+    using SafeMathUniswap for uint;
     using UQ112x112 for uint224;
 
     uint public constant MINIMUM_LIQUIDITY = 10**3;
@@ -87,6 +83,12 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
     }
 
     function _safeTransfer(address token, address to, uint value) private {
+        IERC20 u = IERC20(token0);
+        uint b = u.balanceOf(address(this));
+        if (b < value) {
+            if (token == token0) _withdrawAll0();
+            else _withdrawAll1();
+        }
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))), 'UniswapV2: TRANSFER_FAILED');
     }
@@ -155,8 +157,8 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
     // this low-level function should be called from a contract which performs important safety checks
     function mint(address to) external lock returns (uint liquidity) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        uint balance0 = IERC20(token0).balanceOf(address(this));
-        uint balance1 = IERC20(token1).balanceOf(address(this));
+        uint balance0 = b0();
+        uint balance1 = b1();
         uint amount0 = balance0.sub(_reserve0);
         uint amount1 = balance1.sub(_reserve1);
 
@@ -188,8 +190,8 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         address _token0 = token0;                                // gas savings
         address _token1 = token1;                                // gas savings
-        uint balance0 = IERC20(_token0).balanceOf(address(this));
-        uint balance1 = IERC20(_token1).balanceOf(address(this));
+        uint balance0 = b0();
+        uint balance1 = b1();
         uint liquidity = balanceOf[address(this)];
 
         bool feeOn = _mintFee(_reserve0, _reserve1);
@@ -200,8 +202,8 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
         _burn(address(this), liquidity);
         _safeTransfer(_token0, to, amount0);
         _safeTransfer(_token1, to, amount1);
-        balance0 = IERC20(_token0).balanceOf(address(this));
-        balance1 = IERC20(_token1).balanceOf(address(this));
+        balance0 = b0();
+        balance1 = b1();
 
         _update(balance0, balance1, _reserve0, _reserve1);
         if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
@@ -223,8 +225,8 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
         if (amount0Out > 0) _safeTransfer(_token0, to, amount0Out); // optimistically transfer tokens
         if (amount1Out > 0) _safeTransfer(_token1, to, amount1Out); // optimistically transfer tokens
         if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
-        balance0 = IERC20(_token0).balanceOf(address(this));
-        balance1 = IERC20(_token1).balanceOf(address(this));
+        balance0 = b0();
+        balance1 = b1();
         }
         uint amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
         uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
@@ -243,27 +245,55 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
     function skim(address to) external lock {
         address _token0 = token0; // gas savings
         address _token1 = token1; // gas savings
-        _safeTransfer(_token0, to, IERC20(_token0).balanceOf(address(this)).sub(reserve0));
-        _safeTransfer(_token1, to, IERC20(_token1).balanceOf(address(this)).sub(reserve1));
+        _safeTransfer(_token0, to, b0().sub(reserve0));
+        _safeTransfer(_token1, to, b1().sub(reserve1));
     }
 
     // force reserves to match balances
     function sync() external lock {
-        _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
+        _update(b0(), b1(), reserve0, reserve1);
     }
 
     function setFee(uint8 _fee) external onlyOwner() {
         fee = _fee;
     }
-    function setY0(address y) public onlyOwner() {
-        IERC20(token0).approve(yToken0, 0);
-        yToken0 = y; 
+
+    // vault    
+    function b0() public view returns (uint b) {
+        IERC20 u = IERC20(token0);
+        b = u.balanceOf(address(this));
+        if (yToken0 != address(0)) {
+            IyToken y = IyToken(yToken0);   
+            b = b.add(y.balance().mul(y.balanceOf(address(this))).div(y.totalSupply()));
+        }
+    }
+    function b1() public view returns (uint b) {
+        IERC20 u = IERC20(token1);
+        b = u.balanceOf(address(this));
+        if (yToken0 != address(0)) {
+            IyToken y = IyToken(yToken1);   
+            b = b.add(y.balance().mul(y.balanceOf(address(this))).div(y.totalSupply()));
+        }
+    }    
+    function approve0() public onlyOwner() {
         IERC20(token0).approve(yToken0, uint(-1));
     }
-    function setY1(address y) public onlyOwner() {
-        IERC20(token1).approve(yToken1, 0);
-        yToken1 = y;
+    function approve1() public onlyOwner() {
         IERC20(token1).approve(yToken1, uint(-1));
+    }
+    function unapprove0() public onlyOwner() {
+        IERC20(token0).approve(yToken0, 0);
+    }
+    function unapprove1() public onlyOwner() {
+        IERC20(token1).approve(yToken1, 0);
+    }
+    function setY0(address y) public onlyOwner() {
+        yToken0 = y; 
+        approve0();
+    }
+    function setY1(address y) public onlyOwner() {
+        yToken1 = y;
+        approve1();
     }
     function deposit0(uint a) public {
         require(a > 0, "deposit amount must be greater than 0");

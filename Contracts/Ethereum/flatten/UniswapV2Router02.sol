@@ -72,6 +72,15 @@ library SafeMathUniswap {
     function mul(uint x, uint y) internal pure returns (uint z) {
         require(y == 0 || (z = x * y) / y == x, 'ds-math-mul-overflow');
     }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return div(a, b, "SafeMath: division by zero");
+    }
+    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        // Solidity only automatically asserts when dividing by 0
+        require(b > 0, errorMessage);
+        uint256 c = a / b;
+        return c;
+    }    
 }
 
 
@@ -418,9 +427,9 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
         _;
     }
 
-    constructor() public {
-        factory = 0x53dB549Ba3E80104f1A8F449133c2ee8d453ab1a;
-        WETH = 0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd;
+    constructor(address _factory, address _WETH) public {
+        factory = _factory;
+        WETH = _WETH;
     }
 
     receive() external payable {
