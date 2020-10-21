@@ -1,12 +1,270 @@
-pragma solidity =0.6.12;
+// Dependency file: contracts/interfaces/IUnisaveV2Factory.sol
 
-import './UnisaveV2ERC20.sol';
-import './libraries/Math.sol';
-import './libraries/UQ112x112.sol';
-import './interfaces/IERC20.sol';
-import './interfaces/IyToken.sol';
-import './interfaces/IUnisaveV2Factory.sol';
-import './interfaces/IUnisaveV2Callee.sol';
+// pragma solidity =0.6.12;
+
+interface IUnisaveV2Factory {
+    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
+
+    function feeTo() external view returns (address);
+    function feeToSetter() external view returns (address);
+    function migrator() external view returns (address);
+
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
+    function allPairs(uint) external view returns (address pair);
+    function allPairsLength() external view returns (uint);
+
+    function createPair(address tokenA, address tokenB) external returns (address pair);
+
+    function setFeeTo(address) external;
+    function setFeeToSetter(address) external;
+    function setMigrator(address) external;
+}
+
+
+// Dependency file: contracts/libraries/SafeMath.sol
+
+// pragma solidity =0.6.12;
+
+// a library for performing overflow-safe math, courtesy of DappHub (https://github.com/dapphub/ds-math)
+
+library SafeMathUnisave {
+    function add(uint x, uint y) internal pure returns (uint z) {
+        require((z = x + y) >= x, 'ds-math-add-overflow');
+    }
+
+    function sub(uint x, uint y) internal pure returns (uint z) {
+        require((z = x - y) <= x, 'ds-math-sub-underflow');
+    }
+
+    function mul(uint x, uint y) internal pure returns (uint z) {
+        require(y == 0 || (z = x * y) / y == x, 'ds-math-mul-overflow');
+    }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return div(a, b, "SafeMath: division by zero");
+    }
+    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        // Solidity only automatically asserts when dividing by 0
+        require(b > 0, errorMessage);
+        uint256 c = a / b;
+        return c;
+    }    
+}
+
+
+// Dependency file: contracts/UnisaveV2ERC20.sol
+
+// pragma solidity =0.6.12;
+
+// import 'contracts/libraries/SafeMath.sol';
+
+contract UnisaveV2ERC20 {
+    using SafeMathUnisave for uint;
+
+    string public constant name = 'Bestswap LP Token';
+    string public constant symbol = 'BLP';
+    uint8 public constant decimals = 18;
+    uint  public totalSupply;
+    mapping(address => uint) public balanceOf;
+    mapping(address => mapping(address => uint)) public allowance;
+
+    bytes32 public DOMAIN_SEPARATOR;
+    // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+    bytes32 public constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
+    mapping(address => uint) public nonces;
+
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Transfer(address indexed from, address indexed to, uint value);
+
+    constructor() public {
+        uint chainId;
+        assembly {
+            chainId := chainid()
+        }
+        DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
+                keccak256(bytes(name)),
+                keccak256(bytes('1')),
+                chainId,
+                address(this)
+            )
+        );
+    }
+
+    function _mint(address to, uint value) internal {
+        totalSupply = totalSupply.add(value);
+        balanceOf[to] = balanceOf[to].add(value);
+        emit Transfer(address(0), to, value);
+    }
+
+    function _burn(address from, uint value) internal {
+        balanceOf[from] = balanceOf[from].sub(value);
+        totalSupply = totalSupply.sub(value);
+        emit Transfer(from, address(0), value);
+    }
+
+    function _approve(address owner, address spender, uint value) private {
+        allowance[owner][spender] = value;
+        emit Approval(owner, spender, value);
+    }
+
+    function _transfer(address from, address to, uint value) private {
+        balanceOf[from] = balanceOf[from].sub(value);
+        balanceOf[to] = balanceOf[to].add(value);
+        emit Transfer(from, to, value);
+    }
+
+    function approve(address spender, uint value) external returns (bool) {
+        _approve(msg.sender, spender, value);
+        return true;
+    }
+
+    function transfer(address to, uint value) external returns (bool) {
+        _transfer(msg.sender, to, value);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint value) external returns (bool) {
+        if (allowance[from][msg.sender] != uint(-1)) {
+            allowance[from][msg.sender] = allowance[from][msg.sender].sub(value);
+        }
+        _transfer(from, to, value);
+        return true;
+    }
+
+    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external {
+        require(deadline >= block.timestamp, 'UnisaveV2: EXPIRED');
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                '\x19\x01',
+                DOMAIN_SEPARATOR,
+                keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonces[owner]++, deadline))
+            )
+        );
+        address recoveredAddress = ecrecover(digest, v, r, s);
+        require(recoveredAddress != address(0) && recoveredAddress == owner, 'UnisaveV2: INVALID_SIGNATURE');
+        _approve(owner, spender, value);
+    }
+}
+
+
+// Dependency file: contracts/libraries/Math.sol
+
+// pragma solidity =0.6.12;
+
+// a library for performing various math operations
+
+library Math {
+    function min(uint x, uint y) internal pure returns (uint z) {
+        z = x < y ? x : y;
+    }
+
+    // babylonian method (https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method)
+    function sqrt(uint y) internal pure returns (uint z) {
+        if (y > 3) {
+            z = y;
+            uint x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
+    }
+}
+
+
+// Dependency file: contracts/libraries/UQ112x112.sol
+
+// pragma solidity =0.6.12;
+
+// a library for handling binary fixed point numbers (https://en.wikipedia.org/wiki/Q_(number_format))
+
+// range: [0, 2**112 - 1]
+// resolution: 1 / 2**112
+
+library UQ112x112 {
+    uint224 constant Q112 = 2**112;
+
+    // encode a uint112 as a UQ112x112
+    function encode(uint112 y) internal pure returns (uint224 z) {
+        z = uint224(y) * Q112; // never overflows
+    }
+
+    // divide a UQ112x112 by a uint112, returning a UQ112x112
+    function uqdiv(uint224 x, uint112 y) internal pure returns (uint224 z) {
+        z = x / uint224(y);
+    }
+}
+
+
+// Dependency file: contracts/interfaces/IERC20.sol
+
+// pragma solidity =0.6.12;
+
+interface IERC20 {
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Transfer(address indexed from, address indexed to, uint value);
+
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
+    function decimals() external view returns (uint8);
+    function totalSupply() external view returns (uint);
+    function balanceOf(address owner) external view returns (uint);
+    function allowance(address owner, address spender) external view returns (uint);
+
+    function approve(address spender, uint value) external returns (bool);
+    function transfer(address to, uint value) external returns (bool);
+    function transferFrom(address from, address to, uint value) external returns (bool);
+}
+
+
+// Dependency file: contracts/interfaces/IyToken.sol
+
+// pragma solidity =0.6.12;
+
+interface IyToken {
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Transfer(address indexed from, address indexed to, uint value);
+
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
+    function decimals() external view returns (uint8);
+    function totalSupply() external view returns (uint);
+    function balanceOf(address owner) external view returns (uint);
+    function allowance(address owner, address spender) external view returns (uint);
+
+    function approve(address spender, uint value) external returns (bool);
+    function transfer(address to, uint value) external returns (bool);
+    function transferFrom(address from, address to, uint value) external returns (bool);
+
+    function deposit(uint) external;
+    function withdraw(uint) external;    
+    function balance() external view returns (uint);
+}
+
+
+// Dependency file: contracts/interfaces/IUnisaveV2Callee.sol
+
+// pragma solidity =0.6.12;
+
+interface IUnisaveV2Callee {
+    function UnisaveV2Call(address sender, uint amount0, uint amount1, bytes calldata data) external;
+}
+
+
+// Dependency file: contracts/UnisaveV2Pair.sol
+
+// pragma solidity =0.6.12;
+
+// import 'contracts/UnisaveV2ERC20.sol';
+// import 'contracts/libraries/Math.sol';
+// import 'contracts/libraries/UQ112x112.sol';
+// import 'contracts/interfaces/IERC20.sol';
+// import 'contracts/interfaces/IyToken.sol';
+// import 'contracts/interfaces/IUnisaveV2Factory.sol';
+// import 'contracts/interfaces/IUnisaveV2Callee.sol';
 
 interface IMigrator {
     // Return the desired amount of liquidity token that the migrator wants.
@@ -154,7 +412,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
         }
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
+    // this low-level function should be called from a contract which performs // important safety checks
     function mint(address to) external lock returns (uint liquidity) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         uint balance0 = b0();
@@ -185,7 +443,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
         emit Mint(msg.sender, amount0, amount1);
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
+    // this low-level function should be called from a contract which performs // important safety checks
     function burn(address to) external lock returns (uint amount0, uint amount1) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         address _token0 = token0;                                // gas savings
@@ -210,7 +468,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
         emit Burn(msg.sender, amount0, amount1, to);
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
+    // this low-level function should be called from a contract which performs // important safety checks
     function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
         require(amount0Out > 0 || amount1Out > 0, 'UnisaveV2: INSUFFICIENT_OUTPUT_AMOUNT');
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
@@ -349,4 +607,68 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }     
+}
+
+
+// Root file: contracts/UnisaveV2Factory.sol
+
+pragma solidity =0.6.12;
+
+// import 'contracts/interfaces/IUnisaveV2Factory.sol';
+// import 'contracts/UnisaveV2Pair.sol';
+
+contract UnisaveV2Factory is IUnisaveV2Factory {
+    address public override feeTo;
+    address public override feeToSetter;
+    address public override migrator;
+
+    mapping(address => mapping(address => address)) public override getPair;
+    address[] public override allPairs;
+
+    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
+
+    constructor() public {
+        feeToSetter = msg.sender;
+    }
+
+    function allPairsLength() external override view returns (uint) {
+        return allPairs.length;
+    }
+
+    function pairCodeHash() external pure returns (bytes32) {
+        return keccak256(type(UnisaveV2Pair).creationCode);
+    }
+
+    function createPair(address tokenA, address tokenB) external override returns (address pair) {
+        require(tokenA != tokenB, 'UnisaveV2: IDENTICAL_ADDRESSES');
+        (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        require(token0 != address(0), 'UnisaveV2: ZERO_ADDRESS');
+        require(getPair[token0][token1] == address(0), 'UnisaveV2: PAIR_EXISTS'); // single check is sufficient
+        bytes memory bytecode = type(UnisaveV2Pair).creationCode;
+        bytes32 salt = keccak256(abi.encodePacked(token0, token1));
+        assembly {
+            pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
+        }
+        UnisaveV2Pair(pair).initialize(token0, token1);
+        getPair[token0][token1] = pair;
+        getPair[token1][token0] = pair; // populate mapping in the reverse direction
+        allPairs.push(pair);
+        emit PairCreated(token0, token1, pair, allPairs.length);
+    }
+
+    function setFeeTo(address _feeTo) external override {
+        require(msg.sender == feeToSetter, 'UnisaveV2: FORBIDDEN');
+        feeTo = _feeTo;
+    }
+
+    function setMigrator(address _migrator) external override {
+        require(msg.sender == feeToSetter, 'UnisaveV2: FORBIDDEN');
+        migrator = _migrator;
+    }
+
+    function setFeeToSetter(address _feeToSetter) external override {
+        require(msg.sender == feeToSetter, 'UnisaveV2: FORBIDDEN');
+        feeToSetter = _feeToSetter;
+    }
+
 }
