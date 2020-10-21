@@ -83,7 +83,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     }
 
     function _safeTransfer(address token, address to, uint value) private {
-        IERC20 u = IERC20(token0);
+        IERC20 u = IERC20(token);
         uint b = u.balanceOf(address(this));
         if (b < value) {
             if (token == token0) _withdrawAll0();
