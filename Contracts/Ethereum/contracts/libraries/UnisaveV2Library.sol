@@ -21,7 +21,7 @@ library UnisaveV2Library {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'eeb8b650676e1093b1dd4b0e30987401c4cbd18f12c397418a72600b156d6a58' // init code hash
+                hex'04bc5c8d5873526b645b70b3d5e107235e862ce9da8a378b2f79722897322969' // init code hash
             ))));
     }
 
