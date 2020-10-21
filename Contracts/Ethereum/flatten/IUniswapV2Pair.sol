@@ -1,8 +1,8 @@
-// Root file: contracts/interfaces/IUniswapV2Pair.sol
+// Root file: contracts/interfaces/IUnisaveV2Pair.sol
 
 pragma solidity =0.6.12;
 
-interface IUniswapV2Pair {
+interface IUnisaveV2Pair {
     event Approval(address indexed owner, address indexed spender, uint value);
     event Transfer(address indexed from, address indexed to, uint value);
 

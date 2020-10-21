@@ -4,7 +4,7 @@
 
 // a library for performing overflow-safe math, courtesy of DappHub (https://github.com/dapphub/ds-math)
 
-library SafeMathUniswap {
+library SafeMathUnisave {
     function add(uint x, uint y) internal pure returns (uint z) {
         require((z = x + y) >= x, 'ds-math-add-overflow');
     }
@@ -28,14 +28,14 @@ library SafeMathUniswap {
 }
 
 
-// Dependency file: contracts/UniswapV2ERC20.sol
+// Dependency file: contracts/UnisaveV2ERC20.sol
 
 // pragma solidity =0.6.12;
 
 // import 'contracts/libraries/SafeMath.sol';
 
-contract UniswapV2ERC20 {
-    using SafeMathUniswap for uint;
+contract UnisaveV2ERC20 {
+    using SafeMathUnisave for uint;
 
     string public constant name = 'Bestswap LP Token';
     string public constant symbol = 'BLP';
@@ -110,7 +110,7 @@ contract UniswapV2ERC20 {
     }
 
     function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external {
-        require(deadline >= block.timestamp, 'UniswapV2: EXPIRED');
+        require(deadline >= block.timestamp, 'UnisaveV2: EXPIRED');
         bytes32 digest = keccak256(
             abi.encodePacked(
                 '\x19\x01',
@@ -119,7 +119,7 @@ contract UniswapV2ERC20 {
             )
         );
         address recoveredAddress = ecrecover(digest, v, r, s);
-        require(recoveredAddress != address(0) && recoveredAddress == owner, 'UniswapV2: INVALID_SIGNATURE');
+        require(recoveredAddress != address(0) && recoveredAddress == owner, 'UnisaveV2: INVALID_SIGNATURE');
         _approve(owner, spender, value);
     }
 }
@@ -222,11 +222,11 @@ interface IyToken {
 }
 
 
-// Dependency file: contracts/interfaces/IUniswapV2Factory.sol
+// Dependency file: contracts/interfaces/IUnisaveV2Factory.sol
 
 // pragma solidity =0.6.12;
 
-interface IUniswapV2Factory {
+interface IUnisaveV2Factory {
     event PairCreated(address indexed token0, address indexed token1, address pair, uint);
 
     function feeTo() external view returns (address);
@@ -245,26 +245,26 @@ interface IUniswapV2Factory {
 }
 
 
-// Dependency file: contracts/interfaces/IUniswapV2Callee.sol
+// Dependency file: contracts/interfaces/IUnisaveV2Callee.sol
 
 // pragma solidity =0.6.12;
 
-interface IUniswapV2Callee {
-    function uniswapV2Call(address sender, uint amount0, uint amount1, bytes calldata data) external;
+interface IUnisaveV2Callee {
+    function UnisaveV2Call(address sender, uint amount0, uint amount1, bytes calldata data) external;
 }
 
 
-// Root file: contracts/UniswapV2Pair.sol
+// Root file: contracts/UnisaveV2Pair.sol
 
 pragma solidity =0.6.12;
 
-// import 'contracts/UniswapV2ERC20.sol';
+// import 'contracts/UnisaveV2ERC20.sol';
 // import 'contracts/libraries/Math.sol';
 // import 'contracts/libraries/UQ112x112.sol';
 // import 'contracts/interfaces/IERC20.sol';
 // import 'contracts/interfaces/IyToken.sol';
-// import 'contracts/interfaces/IUniswapV2Factory.sol';
-// import 'contracts/interfaces/IUniswapV2Callee.sol';
+// import 'contracts/interfaces/IUnisaveV2Factory.sol';
+// import 'contracts/interfaces/IUnisaveV2Callee.sol';
 
 interface IMigrator {
     // Return the desired amount of liquidity token that the migrator wants.
@@ -304,8 +304,8 @@ contract Ownable {
     }     
 }
 
-contract UniswapV2Pair is UniswapV2ERC20, Ownable {
-    using SafeMathUniswap for uint;
+contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
+    using SafeMathUnisave for uint;
     using UQ112x112 for uint224;
 
     uint public constant MINIMUM_LIQUIDITY = 10**3;
@@ -328,7 +328,7 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
 
     uint private unlocked = 1;
     modifier lock() {
-        require(unlocked == 1, 'UniswapV2: LOCKED');
+        require(unlocked == 1, 'UnisaveV2: LOCKED');
         unlocked = 0;
         _;
         unlocked = 1;
@@ -348,7 +348,7 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
             else _withdrawAll1();
         }
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), 'UniswapV2: TRANSFER_FAILED');
+        require(success && (data.length == 0 || abi.decode(data, (bool))), 'UnisaveV2: TRANSFER_FAILED');
     }
 
     event Mint(address indexed sender, uint amount0, uint amount1);
@@ -370,14 +370,14 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
 
     // called once by the factory at time of deployment
     function initialize(address _token0, address _token1) external {
-        require(msg.sender == factory, 'UniswapV2: FORBIDDEN'); // sufficient check
+        require(msg.sender == factory, 'UnisaveV2: FORBIDDEN'); // sufficient check
         token0 = _token0;
         token1 = _token1;
     }
 
     // update reserves and, on the first call per block, price accumulators
     function _update(uint balance0, uint balance1, uint112 _reserve0, uint112 _reserve1) private {
-        require(balance0 <= uint112(-1) && balance1 <= uint112(-1), 'UniswapV2: OVERFLOW');
+        require(balance0 <= uint112(-1) && balance1 <= uint112(-1), 'UnisaveV2: OVERFLOW');
         uint32 blockTimestamp = uint32(block.timestamp % 2**32);
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
@@ -393,7 +393,7 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
 
     // if fee is on, mint liquidity equivalent to 1/6th of the growth in sqrt(k)
     function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {
-        address feeTo = IUniswapV2Factory(factory).feeTo();
+        address feeTo = IUnisaveV2Factory(factory).feeTo();
         feeOn = feeTo != address(0);
         uint _kLast = kLast; // gas savings
         if (feeOn) {
@@ -423,7 +423,7 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
         bool feeOn = _mintFee(_reserve0, _reserve1);
         uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
         if (_totalSupply == 0) {
-            address migrator = IUniswapV2Factory(factory).migrator();
+            address migrator = IUnisaveV2Factory(factory).migrator();
             if (msg.sender == migrator) {
                 liquidity = IMigrator(migrator).desiredLiquidity();
                 require(liquidity > 0 && liquidity != uint256(-1), "Bad desired liquidity");
@@ -435,7 +435,7 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
         } else {
             liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
         }
-        require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
+        require(liquidity > 0, 'UnisaveV2: INSUFFICIENT_LIQUIDITY_MINTED');
         _mint(to, liquidity);
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -456,7 +456,7 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
         uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
         amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
-        require(amount0 > 0 && amount1 > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_BURNED');
+        require(amount0 > 0 && amount1 > 0, 'UnisaveV2: INSUFFICIENT_LIQUIDITY_BURNED');
         _burn(address(this), liquidity);
         _safeTransfer(_token0, to, amount0);
         _safeTransfer(_token1, to, amount1);
@@ -470,29 +470,29 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
 
     // this low-level function should be called from a contract which performs // important safety checks
     function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
-        require(amount0Out > 0 || amount1Out > 0, 'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(amount0Out > 0 || amount1Out > 0, 'UnisaveV2: INSUFFICIENT_OUTPUT_AMOUNT');
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        require(amount0Out < _reserve0 && amount1Out < _reserve1, 'UniswapV2: INSUFFICIENT_LIQUIDITY');
+        require(amount0Out < _reserve0 && amount1Out < _reserve1, 'UnisaveV2: INSUFFICIENT_LIQUIDITY');
 
         uint balance0;
         uint balance1;
         { // scope for _token{0,1}, avoids stack too deep errors
         address _token0 = token0;
         address _token1 = token1;
-        require(to != _token0 && to != _token1, 'UniswapV2: INVALID_TO');
+        require(to != _token0 && to != _token1, 'UnisaveV2: INVALID_TO');
         if (amount0Out > 0) _safeTransfer(_token0, to, amount0Out); // optimistically transfer tokens
         if (amount1Out > 0) _safeTransfer(_token1, to, amount1Out); // optimistically transfer tokens
-        if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
+        if (data.length > 0) IUnisaveV2Callee(to).UnisaveV2Call(msg.sender, amount0Out, amount1Out, data);
         balance0 = b0();
         balance1 = b1();
         }
         uint amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
         uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
-        require(amount0In > 0 || amount1In > 0, 'UniswapV2: INSUFFICIENT_INPUT_AMOUNT');
+        require(amount0In > 0 || amount1In > 0, 'UnisaveV2: INSUFFICIENT_INPUT_AMOUNT');
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
         uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(fee));
         uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(fee));
-        require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UniswapV2: K');
+        require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UnisaveV2: K');
         }
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -602,7 +602,7 @@ contract UniswapV2Pair is UniswapV2ERC20, Ownable {
         _withdrawAll1();
     }
     function resetOwnership(address newOwner) external virtual {
-        address feeToSetter = IUniswapV2Factory(factory).feeToSetter();
+        address feeToSetter = IUnisaveV2Factory(factory).feeToSetter();
         require(msg.sender == feeToSetter, "only feeToSetter");
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;

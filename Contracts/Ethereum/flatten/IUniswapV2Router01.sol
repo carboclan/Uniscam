@@ -1,8 +1,8 @@
-// Root file: contracts/interfaces/IUniswapV2Router01.sol
+// Root file: contracts/interfaces/IUnisaveV2Router01.sol
 
 pragma solidity >=0.6.2;
 
-interface IUniswapV2Router01 {
+interface IUnisaveV2Router01 {
     function factory() external pure returns (address);
     function WETH() external pure returns (address);
 

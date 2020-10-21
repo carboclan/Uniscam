@@ -1,8 +1,8 @@
-// Dependency file: contracts/interfaces/IUniswapV2Router01.sol
+// Dependency file: contracts/interfaces/IUnisaveV2Router01.sol
 
 // pragma solidity >=0.6.2;
 
-interface IUniswapV2Router01 {
+interface IUnisaveV2Router01 {
     function factory() external pure returns (address);
     function WETH() external pure returns (address);
 
@@ -96,13 +96,13 @@ interface IUniswapV2Router01 {
     function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);
 }
 
-// Root file: contracts/interfaces/IUniswapV2Router02.sol
+// Root file: contracts/interfaces/IUnisaveV2Router02.sol
 
 pragma solidity =0.6.12;
 
-// import 'contracts/interfaces/IUniswapV2Router01.sol';
+// import 'contracts/interfaces/IUnisaveV2Router01.sol';
 
-interface IUniswapV2Router02 is IUniswapV2Router01 {
+interface IUnisaveV2Router02 is IUnisaveV2Router01 {
     function removeLiquidityETHSupportingFeeOnTransferTokens(
         address token,
         uint liquidity,
