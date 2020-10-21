@@ -51,6 +51,9 @@ interface IUnisaveV2Pair {
     function skim(address to) external;
     function sync() external;
 
+    function b0() external view returns (uint b);
+    function b1() external view returns (uint b);
+
     function initialize(address, address) external;
 }
 
@@ -109,7 +112,7 @@ library UnisaveV2Library {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'0xeeb8b650676e1093b1dd4b0e30987401c4cbd18f12c397418a72600b156d6a58' // init code hash
+                hex'eeb8b650676e1093b1dd4b0e30987401c4cbd18f12c397418a72600b156d6a58' // init code hash
             ))));
     }
 

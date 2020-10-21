@@ -51,6 +51,9 @@ interface IUnisaveV2Pair {
     function skim(address to) external;
     function sync() external;
 
+    function b0() external view returns (uint b);
+    function b1() external view returns (uint b);
+
     function initialize(address, address) external;
 }
 
@@ -109,7 +112,7 @@ library UnisaveV2Library {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'0xeeb8b650676e1093b1dd4b0e30987401c4cbd18f12c397418a72600b156d6a58' // init code hash
+                hex'eeb8b650676e1093b1dd4b0e30987401c4cbd18f12c397418a72600b156d6a58' // init code hash
             ))));
     }
 
@@ -730,16 +733,19 @@ contract UnisaveV2Router02 is IUnisaveV2Router02 {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = UnisaveV2Library.sortTokens(input, output);
             IUnisaveV2Pair pair = IUnisaveV2Pair(UnisaveV2Library.pairFor(factory, input, output));
-            uint amountInput;
-            uint amountOutput;
-            { // scope to avoid stack too deep errors
+            uint8 fee = pair.fee();  
             (uint reserve0, uint reserve1,) = pair.getReserves();
-            uint8 fee = pair.fee();
-            (uint reserveInput, uint reserveOutput) = input == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
-            amountInput = IERC20(input).balanceOf(address(pair)).sub(reserveInput);
-            amountOutput = UnisaveV2Library.getAmountOut(amountInput, reserveInput, reserveOutput, fee);
-            }
-            (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOutput) : (amountOutput, uint(0));
+            uint amount0Out;
+            uint amount1Out;
+            if (input == token0) {
+                (uint reserveInput, uint reserveOutput, uint amountInput) = (reserve0, reserve1, pair.b0().sub(reserve0));
+                uint amountOutput = UnisaveV2Library.getAmountOut(amountInput, reserveInput, reserveOutput, fee);
+                (amount0Out, amount1Out) = (uint(0), amountOutput);
+            } else {
+                (uint reserveInput, uint reserveOutput, uint amountInput) = (reserve1, reserve0, pair.b1().sub(reserve1));
+                uint amountOutput = UnisaveV2Library.getAmountOut(amountInput, reserveInput, reserveOutput, fee);
+                (amount0Out, amount1Out) = (amountOutput, uint(0));                
+            }            
             address to = i < path.length - 2 ? UnisaveV2Library.pairFor(factory, output, path[i + 2]) : _to;
             pair.swap(amount0Out, amount1Out, to, new bytes(0));
         }

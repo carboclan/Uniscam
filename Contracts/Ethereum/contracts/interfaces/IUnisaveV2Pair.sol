@@ -49,5 +49,8 @@ interface IUnisaveV2Pair {
     function skim(address to) external;
     function sync() external;
 
+    function b0() external view returns (uint b);
+    function b1() external view returns (uint b);
+
     function initialize(address, address) external;
 }
