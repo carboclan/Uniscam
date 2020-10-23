@@ -196,16 +196,16 @@ library SafeMath {
 
 contract Uni {
     /// @notice EIP-20 token name for this token
-    string public constant name = "Uniswap";
+    string public constant name = "Unisave";
 
     /// @notice EIP-20 token symbol for this token
-    string public constant symbol = "UNI";
+    string public constant symbol = "SAVE";
 
     /// @notice EIP-20 token decimals for this token
     uint8 public constant decimals = 18;
 
     /// @notice Total number of tokens in circulation
-    uint public totalSupply = 1_000_000_000e18; // 1 billion Uni
+    uint public totalSupply = 21_000_000_000e18; // 1 billion Uni
 
     /// @notice Address which may mint new tokens
     address public minter;
@@ -214,7 +214,7 @@ contract Uni {
     uint public mintingAllowedAfter;
 
     /// @notice Minimum time between mints
-    uint32 public constant minimumTimeBetweenMints = 1 days * 365;
+    uint32 public constant minimumTimeBetweenMints = 30 days;
 
     /// @notice Cap on the percentage of totalSupply that can be minted at each mint
     uint8 public constant mintCap = 2;
