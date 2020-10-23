@@ -37,8 +37,8 @@ pragma solidity =0.6.12;
 contract UnisaveV2ERC20 {
     using SafeMathUnisave for uint;
 
-    string public constant name = 'Bestswap LP Token';
-    string public constant symbol = 'BLP';
+    string public constant name = 'Unisave LP Token';
+    string public constant symbol = 'Unisave_LP';
     uint8 public constant decimals = 18;
     uint  public totalSupply;
     mapping(address => uint) public balanceOf;
