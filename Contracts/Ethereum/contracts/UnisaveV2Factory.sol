@@ -7,6 +7,7 @@ contract UnisaveV2Factory is IUnisaveV2Factory {
     address public override feeTo;
     address public override feeToSetter;
     address public override migrator;
+    address public override externality;
 
     mapping(address => mapping(address => address)) public override getPair;
     address[] public override allPairs;
@@ -56,5 +57,10 @@ contract UnisaveV2Factory is IUnisaveV2Factory {
         require(msg.sender == feeToSetter, 'UnisaveV2: FORBIDDEN');
         feeToSetter = _feeToSetter;
     }
+
+    function setExternality(address _externality) external override {
+        require(msg.sender == feeToSetter, 'UnisaveV2: FORBIDDEN');
+        externality = _externality;
+    }    
 
 }
