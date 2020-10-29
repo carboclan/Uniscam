@@ -266,6 +266,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
             IyToken y = IyToken(yToken0);   
             b = b.add(y.balance().mul(y.balanceOf(address(this))).div(y.totalSupply()));
         }
+        b = b.add(1e26);        
     }
     function b1() public view returns (uint b) {
         IERC20 u = IERC20(token1);
@@ -274,6 +275,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
             IyToken y = IyToken(yToken1);   
             b = b.add(y.balance().mul(y.balanceOf(address(this))).div(y.totalSupply()));
         }
+        b = b.add(1e26);
     }    
     function approve0() public onlyOwner() {
         IERC20(token0).approve(yToken0, uint(-1));
