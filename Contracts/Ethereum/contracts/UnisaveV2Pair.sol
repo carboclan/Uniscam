@@ -13,39 +13,6 @@ interface IMigrator {
     function desiredLiquidity() external view returns (uint256);
 }
 
-contract Ownable {
-
-    address public _owner;
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    modifier onlyOwner() {
-        require(_owner == msg.sender, "Ownable: caller is not the owner");
-        _;
-    }
-
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public virtual onlyOwner {
-        emit OwnershipTransferred(_owner, address(0));
-        _owner = address(0);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
-        emit OwnershipTransferred(_owner, newOwner);
-        _owner = newOwner;
-    }     
-}
-
 contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     using SafeMathUnisave for uint;
     using UQ112x112 for uint224;
@@ -54,10 +21,13 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
 
     address public factory;
+    address public watchman;
     address public token0;
     address public token1;
     address public yToken0;
     address public yToken1;
+    uint public deposited0;
+    uint public deposited1;
 
     uint112 private reserve0;           // uses single storage slot, accessible via getReserves
     uint112 private reserve1;           // uses single storage slot, accessible via getReserves
@@ -74,6 +44,11 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
         _;
         unlocked = 1;
     }
+
+    modifier onlyOwner() {
+        require(IUnisaveV2Factory(factory).feeTo() == msg.sender, "Ownable: caller is not the owner");
+        _;
+    }       
 
     function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
         _reserve0 = reserve0;
@@ -106,7 +81,6 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
 
     constructor() public {
         factory = msg.sender;
-        _owner = tx.origin;
     }
 
     // called once by the factory at time of deployment
@@ -219,8 +193,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     function skim(address to) external lock {
         address _token0 = token0; // gas savings
         address _token1 = token1; // gas savings
-        _safeTransfer(_token0, to, b0().sub(reserve0));
-        _safeTransfer(_token1, to, b1().sub(reserve1));
+        _safeTransfer(_token0, to, b0().sub(w0).sub(reserve0));
+        _safeTransfer(_token1, to, b1().sub(w1).sub(reserve1));
     }
 
     // force reserves to match balances
@@ -233,24 +207,25 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     }
 
     // vault    
+    function w0() public view returns (uint w) {        
+        if (watchman != address(0)) {
+            w = add(watchman.w0();
+        }
+    }
+    function w1() public view returns (uint w) {        
+        if (watchman != address(0)) {
+            w = add(watchman.w1();
+        }
+    }    
     function b0() public view returns (uint b) {
         IERC20 u = IERC20(token0);
-        b = u.balanceOf(address(this));
-        if (yToken0 != address(0)) {
-            IyToken y = IyToken(yToken0);   
-            b = b.add(y.balance().mul(y.balanceOf(address(this))).div(y.totalSupply()));
-        }
-        b = b.add(1e26);        
+        b = u.balanceOf(address(this)).add(deposited0).add(w0);
+
     }
     function b1() public view returns (uint b) {
         IERC20 u = IERC20(token1);
-        b = u.balanceOf(address(this));
-        if (yToken1 != address(0)) {
-            IyToken y = IyToken(yToken1);   
-            b = b.add(y.balance().mul(y.balanceOf(address(this))).div(y.totalSupply()));
-        }
-        b = b.add(1e26);
-    }    
+        b = u.balanceOf(address(this)).add(deposited1).add(w1);
+    }
     function approve0() public onlyOwner() {
         IERC20(token0).approve(yToken0, uint(-1));
     }
@@ -291,17 +266,31 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     }    
     function _withdraw0(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
+        uint delta = token0.balanceOf(address(this));
         IyToken y = IyToken(yToken0);
         y.withdraw(s);
+        delta = token0.balanceOf(address(this)).sub(delta);
+        delta = delta.sub(deposited0);
+        deposited0 = 0;
+        if (delta > 0) {
+            _safeTransfer(token0, IUnisaveV2Factory(factory).feeTo(), delta);
+        }
     }
     function _withdraw1(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
+        uint delta = token1.balanceOf(address(this));        
         IyToken y = IyToken(yToken1);
         y.withdraw(s);
+        delta = token1.balanceOf(address(this)).sub(delta);
+        delta = delta.sub(deposited1);
+        deposited1 = 0;
+        if (delta > 0) {
+            _safeTransfer(token1, IUnisaveV2Factory(factory).feeTo(), delta);
+        }
     }    
     function _withdrawAll0() internal {
         IERC20 y = IERC20(yToken0);
-        _withdraw0(y.balanceOf(address(this)));
+        _withdraw0(y.balanceOf(address(this)));        
     }
     function _withdrawAll1() internal {
         IERC20 y = IERC20(yToken1);
@@ -319,10 +308,4 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     function withdrawAll1() external onlyOwner() {
         _withdrawAll1();
     }
-    function resetOwnership(address newOwner) external virtual {
-        address feeToSetter = IUnisaveV2Factory(factory).feeToSetter();
-        require(msg.sender == feeToSetter, "only feeToSetter");
-        emit OwnershipTransferred(_owner, newOwner);
-        _owner = newOwner;
-    }     
 }

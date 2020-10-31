@@ -15,6 +15,7 @@ contract UnisaveV2Factory is IUnisaveV2Factory {
 
     constructor() public {
         feeToSetter = msg.sender;
+        feeTo = msg.sender;
     }
 
     function allPairsLength() external override view returns (uint) {
