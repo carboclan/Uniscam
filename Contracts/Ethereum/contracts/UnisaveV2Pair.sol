@@ -8,11 +8,6 @@ import './interfaces/IyToken.sol';
 import './interfaces/IUnisaveV2Factory.sol';
 import './interfaces/IUnisaveV2Callee.sol';
 
-interface IMigrator {
-    // Return the desired amount of liquidity token that the migrator wants.
-    function desiredLiquidity() external view returns (uint256);
-}
-
 contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     using SafeMathUnisave for uint;
     using UQ112x112 for uint224;
@@ -116,19 +111,12 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
 
         uint _totalSupply = totalSupply; // gas savings
         if (_totalSupply == 0) {
-            address migrator = IUnisaveV2Factory(factory).migrator();
-            if (msg.sender == migrator) {
-                liquidity = IMigrator(migrator).desiredLiquidity();
-                require(liquidity > 0 && liquidity != uint256(-1), "Bad desired liquidity");
-            } else {
-                require(migrator == address(0), "Must not have migrator");
-                liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
-                _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
-            }
+            liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
+           _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
             liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
         }
-        require(liquidity > 0, 'UnisaveV2: INSUFFICIENT_LIQUIDITY_MINTED');
+        require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
         _mint(to, liquidity);
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -219,12 +207,12 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     }    
     function b0() public view returns (uint b) {
         IERC20 u = IERC20(token0);
-        b = u.balanceOf(address(this)).add(deposited0).add(w0);
+        b = u.balanceOf(address(this)).add(deposited0);
 
     }
     function b1() public view returns (uint b) {
         IERC20 u = IERC20(token1);
-        b = u.balanceOf(address(this)).add(deposited1).add(w1);
+        b = u.balanceOf(address(this)).add(deposited1);
     }
     function approve0() public onlyOwner() {
         IERC20(token0).approve(yToken0, uint(-1));
