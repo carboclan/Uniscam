@@ -219,7 +219,6 @@ interface IUnisaveV2Factory {
 
     function feeTo() external view returns (address);
     function feeToSetter() external view returns (address);
-    function migrator() external view returns (address);
 
     function getPair(address tokenA, address tokenB) external view returns (address pair);
     function allPairs(uint) external view returns (address pair);
@@ -229,7 +228,6 @@ interface IUnisaveV2Factory {
 
     function setFeeTo(address) external;
     function setFeeToSetter(address) external;
-    function setMigrator(address) external;
 }
 
 
@@ -254,45 +252,7 @@ pragma solidity =0.6.12;
 // import 'contracts/interfaces/IUnisaveV2Factory.sol';
 // import 'contracts/interfaces/IUnisaveV2Callee.sol';
 
-interface IMigrator {
-    // Return the desired amount of liquidity token that the migrator wants.
-    function desiredLiquidity() external view returns (uint256);
-}
-
-contract Ownable {
-
-    address public _owner;
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    modifier onlyOwner() {
-        require(_owner == msg.sender, "Ownable: caller is not the owner");
-        _;
-    }
-
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public virtual onlyOwner {
-        emit OwnershipTransferred(_owner, address(0));
-        _owner = address(0);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
-        emit OwnershipTransferred(_owner, newOwner);
-        _owner = newOwner;
-    }     
-}
-
-contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
+contract UnisaveV2Pair is UnisaveV2ERC20 {
     using SafeMathUnisave for uint;
     using UQ112x112 for uint224;
 
@@ -300,13 +260,14 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
 
     address public factory;
-    address public watchman;
     address public token0;
     address public token1;
     address public yToken0;
     address public yToken1;
     uint public deposited0;
     uint public deposited1;
+    uint public dummy0;
+    uint public dummy1;   
 
     uint112 private reserve0;           // uses single storage slot, accessible via getReserves
     uint112 private reserve1;           // uses single storage slot, accessible via getReserves
@@ -323,6 +284,11 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
         _;
         unlocked = 1;
     }
+
+    modifier onlyOwner() {
+        require(IUnisaveV2Factory(factory).feeTo() == msg.sender, "Ownable: caller is not the owner");
+        _;
+    }       
 
     function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
         _reserve0 = reserve0;
@@ -355,7 +321,6 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
 
     constructor() public {
         factory = msg.sender;
-        _owner = IUnisaveV2Factory(factory).feeToSetter();
     }
 
     // called once by the factory at time of deployment
@@ -391,19 +356,12 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
 
         uint _totalSupply = totalSupply; // gas savings
         if (_totalSupply == 0) {
-            address migrator = IUnisaveV2Factory(factory).migrator();
-            if (msg.sender == migrator) {
-                liquidity = IMigrator(migrator).desiredLiquidity();
-                require(liquidity > 0 && liquidity != uint256(-1), "Bad desired liquidity");
-            } else {
-                require(migrator == address(0), "Must not have migrator");
-                liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
-                _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
-            }
+            liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
+           _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
             liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
         }
-        require(liquidity > 0, 'UnisaveV2: INSUFFICIENT_LIQUIDITY_MINTED');
+        require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
         _mint(to, liquidity);
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -432,6 +390,49 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
         _update(balance0, balance1, _reserve0, _reserve1);
         emit Burn(msg.sender, amount0, amount1, to);
     }
+
+    // this low-level function should be called from a contract which performs // important safety checks
+    function dummy_mint(uint amount0, uint amount1) external onlyOwner() lock returns (uint liquidity) {
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
+        dummy0 = dummy0.add(amount0);
+        dummy1 = dummy1.add(amount1);
+        uint balance0 = b0();
+        uint balance1 = b1();
+
+        uint _totalSupply = totalSupply; // gas savings
+        if (_totalSupply == 0) {
+            liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
+           _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
+        } else {
+            liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
+        }
+        require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
+        _mint(address(this), liquidity);
+
+        _update(balance0, balance1, _reserve0, _reserve1);
+        emit Mint(address(this), amount0, amount1);
+    }
+    
+    // this low-level function should be called from a contract which performs // important safety checks
+    function dummy_burn(address to) external onlyOwner() lock returns (uint amount0, uint amount1) {
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
+        uint balance0 = b0();
+        uint balance1 = b1();
+        uint liquidity = balanceOf[address(this)];
+
+        uint _totalSupply = totalSupply; // gas savings
+        amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
+        amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
+        require(amount0 > 0 && amount1 > 0, 'UnisaveV2: INSUFFICIENT_LIQUIDITY_BURNED');
+        _burn(address(this), liquidity);
+        dummy0 = dummy0.sub(amount0);
+        dummy1 = dummy1.sub(amount1);        
+        balance0 = b0();
+        balance1 = b1();
+
+        _update(balance0, balance1, _reserve0, _reserve1);
+        emit Burn(msg.sender, amount0, amount1, to);
+    }    
 
     // this low-level function should be called from a contract which performs // important safety checks
     function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
@@ -468,8 +469,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     function skim(address to) external lock {
         address _token0 = token0; // gas savings
         address _token1 = token1; // gas savings
-        _safeTransfer(_token0, to, b0().sub(w0).sub(reserve0));
-        _safeTransfer(_token1, to, b1().sub(w1).sub(reserve1));
+        _safeTransfer(_token0, to, b0().sub(reserve0));
+        _safeTransfer(_token1, to, b1().sub(reserve1));
     }
 
     // force reserves to match balances
@@ -482,24 +483,13 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     }
 
     // vault    
-    function w0() public view returns (uint w) {        
-        if (watchman != address(0)) {
-            w = add(watchman.w0();
-        }
-    }
-    function w1() public view returns (uint w) {        
-        if (watchman != address(0)) {
-            w = add(watchman.w1();
-        }
-    }    
     function b0() public view returns (uint b) {
         IERC20 u = IERC20(token0);
-        b = u.balanceOf(address(this)).add(deposited0).add(w0);
-
+        b = u.balanceOf(address(this)).add(deposited0).add(dummy0);
     }
     function b1() public view returns (uint b) {
         IERC20 u = IERC20(token1);
-        b = u.balanceOf(address(this)).add(deposited1).add(w1);
+        b = u.balanceOf(address(this)).add(deposited1).add(dummy1);
     }
     function approve0() public onlyOwner() {
         IERC20(token0).approve(yToken0, uint(-1));
@@ -541,10 +531,11 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     }    
     function _withdraw0(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
-        uint delta = token0.balanceOf(address(this));
+        IERC20 u = IERC20(token0);
+        uint delta = u.balanceOf(address(this));
         IyToken y = IyToken(yToken0);
         y.withdraw(s);
-        delta = token0.balanceOf(address(this)).sub(delta);
+        delta = u.balanceOf(address(this)).sub(delta);
         delta = delta.sub(deposited0);
         deposited0 = 0;
         if (delta > 0) {
@@ -553,10 +544,11 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     }
     function _withdraw1(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
-        uint delta = token1.balanceOf(address(this));        
+        IERC20 u = IERC20(token1);        
+        uint delta = u.balanceOf(address(this));        
         IyToken y = IyToken(yToken1);
         y.withdraw(s);
-        delta = token1.balanceOf(address(this)).sub(delta);
+        delta = u.balanceOf(address(this)).sub(delta);
         delta = delta.sub(deposited1);
         deposited1 = 0;
         if (delta > 0) {
@@ -583,10 +575,4 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     function withdrawAll1() external onlyOwner() {
         _withdrawAll1();
     }
-    function resetOwnership(address newOwner) external virtual {
-        address feeToSetter = IUnisaveV2Factory(factory).feeToSetter();
-        require(msg.sender == feeToSetter, "only feeToSetter");
-        emit OwnershipTransferred(_owner, newOwner);
-        _owner = newOwner;
-    }     
 }

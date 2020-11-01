@@ -8,7 +8,7 @@ import './interfaces/IyToken.sol';
 import './interfaces/IUnisaveV2Factory.sol';
 import './interfaces/IUnisaveV2Callee.sol';
 
-contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
+contract UnisaveV2Pair is UnisaveV2ERC20 {
     using SafeMathUnisave for uint;
     using UQ112x112 for uint224;
 
@@ -16,13 +16,14 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
 
     address public factory;
-    address public watchman;
     address public token0;
     address public token1;
     address public yToken0;
     address public yToken1;
     uint public deposited0;
     uint public deposited1;
+    uint public dummy0;
+    uint public dummy1;   
 
     uint112 private reserve0;           // uses single storage slot, accessible via getReserves
     uint112 private reserve1;           // uses single storage slot, accessible via getReserves
@@ -147,6 +148,49 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
+    function dummy_mint(uint amount0, uint amount1) external onlyOwner() lock returns (uint liquidity) {
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
+        dummy0 = dummy0.add(amount0);
+        dummy1 = dummy1.add(amount1);
+        uint balance0 = b0();
+        uint balance1 = b1();
+
+        uint _totalSupply = totalSupply; // gas savings
+        if (_totalSupply == 0) {
+            liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
+           _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
+        } else {
+            liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
+        }
+        require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
+        _mint(address(this), liquidity);
+
+        _update(balance0, balance1, _reserve0, _reserve1);
+        emit Mint(address(this), amount0, amount1);
+    }
+    
+    // this low-level function should be called from a contract which performs important safety checks
+    function dummy_burn(address to) external onlyOwner() lock returns (uint amount0, uint amount1) {
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
+        uint balance0 = b0();
+        uint balance1 = b1();
+        uint liquidity = balanceOf[address(this)];
+
+        uint _totalSupply = totalSupply; // gas savings
+        amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
+        amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
+        require(amount0 > 0 && amount1 > 0, 'UnisaveV2: INSUFFICIENT_LIQUIDITY_BURNED');
+        _burn(address(this), liquidity);
+        dummy0 = dummy0.sub(amount0);
+        dummy1 = dummy1.sub(amount1);        
+        balance0 = b0();
+        balance1 = b1();
+
+        _update(balance0, balance1, _reserve0, _reserve1);
+        emit Burn(msg.sender, amount0, amount1, to);
+    }    
+
+    // this low-level function should be called from a contract which performs important safety checks
     function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
         require(amount0Out > 0 || amount1Out > 0, 'UnisaveV2: INSUFFICIENT_OUTPUT_AMOUNT');
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
@@ -181,8 +225,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     function skim(address to) external lock {
         address _token0 = token0; // gas savings
         address _token1 = token1; // gas savings
-        _safeTransfer(_token0, to, b0().sub(w0).sub(reserve0));
-        _safeTransfer(_token1, to, b1().sub(w1).sub(reserve1));
+        _safeTransfer(_token0, to, b0().sub(reserve0));
+        _safeTransfer(_token1, to, b1().sub(reserve1));
     }
 
     // force reserves to match balances
@@ -195,24 +239,13 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     }
 
     // vault    
-    function w0() public view returns (uint w) {        
-        if (watchman != address(0)) {
-            w = add(watchman.w0();
-        }
-    }
-    function w1() public view returns (uint w) {        
-        if (watchman != address(0)) {
-            w = add(watchman.w1();
-        }
-    }    
     function b0() public view returns (uint b) {
         IERC20 u = IERC20(token0);
-        b = u.balanceOf(address(this)).add(deposited0);
-
+        b = u.balanceOf(address(this)).add(deposited0).add(dummy0);
     }
     function b1() public view returns (uint b) {
         IERC20 u = IERC20(token1);
-        b = u.balanceOf(address(this)).add(deposited1);
+        b = u.balanceOf(address(this)).add(deposited1).add(dummy1);
     }
     function approve0() public onlyOwner() {
         IERC20(token0).approve(yToken0, uint(-1));
@@ -254,10 +287,11 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     }    
     function _withdraw0(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
-        uint delta = token0.balanceOf(address(this));
+        IERC20 u = IERC20(token0);
+        uint delta = u.balanceOf(address(this));
         IyToken y = IyToken(yToken0);
         y.withdraw(s);
-        delta = token0.balanceOf(address(this)).sub(delta);
+        delta = u.balanceOf(address(this)).sub(delta);
         delta = delta.sub(deposited0);
         deposited0 = 0;
         if (delta > 0) {
@@ -266,10 +300,11 @@ contract UnisaveV2Pair is UnisaveV2ERC20, Ownable {
     }
     function _withdraw1(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
-        uint delta = token1.balanceOf(address(this));        
+        IERC20 u = IERC20(token1);        
+        uint delta = u.balanceOf(address(this));        
         IyToken y = IyToken(yToken1);
         y.withdraw(s);
-        delta = token1.balanceOf(address(this)).sub(delta);
+        delta = u.balanceOf(address(this)).sub(delta);
         delta = delta.sub(deposited1);
         deposited1 = 0;
         if (delta > 0) {
