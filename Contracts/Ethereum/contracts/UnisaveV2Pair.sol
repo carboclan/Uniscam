@@ -52,6 +52,16 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         _blockTimestampLast = blockTimestampLast;
     }
 
+    function getDeposited() public view returns (uint112 _deposited0, uint112 _deposited1) {
+        _deposited0 = deposited0;
+        _deposited1 = deposited1;
+    }    
+
+    function getDummy() public view returns (uint112 _dummy0, uint112 _dummy1) {
+        _dummy0 = dummy0;
+        _dummy1 = dummy1;
+    }
+
     function _safeTransfer(address token, address to, uint value) private {
         IERC20 u = IERC20(token);
         uint b = u.balanceOf(address(this));
