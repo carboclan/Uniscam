@@ -41,11 +41,15 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         _;
         unlocked = 1;
     }
-
+    
     modifier onlyOwner() {
-        require(IUnisaveV2Factory(factory).feeTo() == msg.sender, "Ownable: caller is not the owner");
+        require(owner() == msg.sender, "Ownable: caller is not the owner");
         _;
     }       
+
+    function owner() public view returns (address) {
+        return IUnisaveV2Factory(factory).feeTo();
+    }
 
     function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
         _reserve0 = reserve0;
@@ -303,7 +307,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         delta = delta.sub(deposited0);
         deposited0 = 0;
         if (delta > 0) {
-            _safeTransfer(token0, IUnisaveV2Factory(factory).feeTo(), delta);
+            _safeTransfer(token0, owner(), delta);
         }
     }
     function _withdraw1(uint s) internal {
@@ -316,7 +320,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         delta = delta.sub(deposited1);
         deposited1 = 0;
         if (delta > 0) {
-            _safeTransfer(token1, IUnisaveV2Factory(factory).feeTo(), delta);
+            _safeTransfer(token1, owner(), delta);
         }
     }    
     function _withdrawAll0() internal {
