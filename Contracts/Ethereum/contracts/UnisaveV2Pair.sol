@@ -22,8 +22,9 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     address public yToken1;
     uint public deposited0;
     uint public deposited1;
-    uint public dummy0;
-    uint public dummy1;   
+    uint112 public dummy0;
+    uint112 public dummy1;
+    uint public dummyLP;
 
     uint112 private reserve0;           // uses single storage slot, accessible via getReserves
     uint112 private reserve1;           // uses single storage slot, accessible via getReserves
@@ -52,12 +53,12 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         _blockTimestampLast = blockTimestampLast;
     }
 
-    function getDeposited() public view returns (uint112 _deposited0, uint112 _deposited1) {
+    function getDeposited() public view returns (uint _deposited0, uint _deposited1) {
         _deposited0 = deposited0;
         _deposited1 = deposited1;
     }    
 
-    function getDummy() public view returns (uint112 _dummy0, uint112 _dummy1) {
+    function getDummy() public view returns (uint _dummy0, uint _dummy1) {
         _dummy0 = dummy0;
         _dummy1 = dummy1;
     }
@@ -75,6 +76,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
 
     event Mint(address indexed sender, uint amount0, uint amount1);
     event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
+    event DummyMint(uint amount0, uint amount1);
+    event DummyBurn();    
     event Swap(
         address indexed sender,
         uint amount0In,
@@ -119,7 +122,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         uint balance1 = b1();
         uint amount0 = balance0.sub(_reserve0);
         uint amount1 = balance1.sub(_reserve1);
-
+        _reserve0 -= dummy0;
+        _reserve1 -= dummy1;
         uint _totalSupply = totalSupply; // gas savings
         if (_totalSupply == 0) {
             liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
@@ -129,7 +133,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         }
         require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
         _mint(to, liquidity);
-
+        _reserve0 += dummy0;
+        _reserve1 += dummy1;
         _update(balance0, balance1, _reserve0, _reserve1);
         emit Mint(msg.sender, amount0, amount1);
     }
@@ -139,10 +144,10 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         address _token0 = token0;                                // gas savings
         address _token1 = token1;                                // gas savings
-        uint balance0 = b0();
-        uint balance1 = b1();
+        uint balance0 = b0().sub(dummy0);
+        uint balance1 = b1().sub(dummy1);
         uint liquidity = balanceOf[address(this)];
-
+        
         uint _totalSupply = totalSupply; // gas savings
         amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
@@ -159,12 +164,10 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
 
     // this low-level function should be called from a contract which performs important safety checks
     function dummy_mint(uint amount0, uint amount1) external onlyOwner() lock returns (uint liquidity) {
+        require(dummyLP == 0, 'dummyLP = 0');
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        dummy0 = dummy0.add(amount0);
-        dummy1 = dummy1.add(amount1);
         uint balance0 = b0();
         uint balance1 = b1();
-
         uint _totalSupply = totalSupply; // gas savings
         if (_totalSupply == 0) {
             liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
@@ -173,31 +176,26 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
             liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
         }
         require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
-        _mint(address(this), liquidity);
-
+        _mint(msg.sender, liquidity);
+        dummyLP = liquidity;
+        dummy0 = uint112(amount0);
+        dummy1 = uint112(amount1);
+        _reserve0 += dummy0;
+        _reserve1 += dummy1;
         _update(balance0, balance1, _reserve0, _reserve1);
-        emit Mint(address(this), amount0, amount1);
+        emit DummyMint(amount0, amount1);
     }
     
     // this low-level function should be called from a contract which performs important safety checks
-    function dummy_burn(address to) external onlyOwner() lock returns (uint amount0, uint amount1) {
+    function dummy_burn() external onlyOwner() lock {
+        require(dummyLP != 0, 'dummyLP != 0');        
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        uint balance0 = b0();
-        uint balance1 = b1();
-        uint liquidity = balanceOf[address(this)];
-
-        uint _totalSupply = totalSupply; // gas savings
-        amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
-        amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
-        require(amount0 > 0 && amount1 > 0, 'UnisaveV2: INSUFFICIENT_LIQUIDITY_BURNED');
-        _burn(address(this), liquidity);
-        dummy0 = dummy0.sub(amount0);
-        dummy1 = dummy1.sub(amount1);        
-        balance0 = b0();
-        balance1 = b1();
-
-        _update(balance0, balance1, _reserve0, _reserve1);
-        emit Burn(msg.sender, amount0, amount1, to);
+        _burn(address(this), dummyLP);
+        dummy0 = 0;
+        dummy1 = 0;
+        dummyLP = 0;
+        _update(b0(), b1(), _reserve0, _reserve1);
+        emit DummyBurn();
     }    
 
     // this low-level function should be called from a contract which performs important safety checks

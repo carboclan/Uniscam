@@ -42,7 +42,7 @@ contract UnisaveV2Router02 is IUnisaveV2Router02 {
         if (IUnisaveV2Factory(factory).getPair(tokenA, tokenB) == address(0)) {
             IUnisaveV2Factory(factory).createPair(tokenA, tokenB);
         }
-        (uint reserveA, uint reserveB, ) = UnisaveV2Library.getReserves(factory, tokenA, tokenB);
+        (uint reserveA, uint reserveB, ) = UnisaveV2Library.getReservesWithoutDummy(factory, tokenA, tokenB);
         if (reserveA == 0 && reserveB == 0) {
             (amountA, amountB) = (amountADesired, amountBDesired);
         } else {

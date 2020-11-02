@@ -26,6 +26,17 @@ library UnisaveV2Library {
     }
 
     // fetches and sorts the reserves and fee for a pair
+    function getReservesWithoutDummy(address factory, address tokenA, address tokenB) internal view returns (uint reserveA, uint reserveB, uint8 fee) {
+        (address token0,) = sortTokens(tokenA, tokenB);
+        IUnisaveV2Pair pair = IUnisaveV2Pair(pairFor(factory, tokenA, tokenB));
+        (uint reserve0, uint reserve1,) = pair.getReserves();
+        (uint dummy0, uint dummy1) = pair.getDummy();
+        reserve0 -= dummy0; reserve1 -= dummy1;     
+        (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
+        fee = pair.fee();
+    }    
+
+    // fetches and sorts the reserves and fee for a pair
     function getReserves(address factory, address tokenA, address tokenB) internal view returns (uint reserveA, uint reserveB, uint8 fee) {
         (address token0,) = sortTokens(tokenA, tokenB);
         (uint reserve0, uint reserve1,) = IUnisaveV2Pair(pairFor(factory, tokenA, tokenB)).getReserves();

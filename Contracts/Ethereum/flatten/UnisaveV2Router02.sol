@@ -40,6 +40,8 @@ interface IUnisaveV2Pair {
     function token0() external view returns (address);
     function token1() external view returns (address);
     function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+    function getDeposited() external view returns (uint _deposited0, uint _deposited1);
+    function getDummy() external view returns (uint _dummy0, uint _dummy1);
     function price0CumulativeLast() external view returns (uint);
     function price1CumulativeLast() external view returns (uint);
     function kLast() external view returns (uint);
@@ -115,6 +117,17 @@ library UnisaveV2Library {
                 hex'04bc5c8d5873526b645b70b3d5e107235e862ce9da8a378b2f79722897322969' // init code hash
             ))));
     }
+
+    // fetches and sorts the reserves and fee for a pair
+    function getReservesWithoutDummy(address factory, address tokenA, address tokenB) internal view returns (uint reserveA, uint reserveB, uint8 fee) {
+        (address token0,) = sortTokens(tokenA, tokenB);
+        IUnisaveV2Pair pair = IUnisaveV2Pair(pairFor(factory, tokenA, tokenB));
+        (uint reserve0, uint reserve1,) = pair.getReserves();
+        (uint dummy0, uint dummy1) = pair.getDummy();
+        reserve0 -= dummy0; reserve1 -= dummy1;     
+        (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
+        fee = pair.fee();
+    }    
 
     // fetches and sorts the reserves and fee for a pair
     function getReserves(address factory, address tokenA, address tokenB) internal view returns (uint reserveA, uint reserveB, uint8 fee) {
@@ -450,7 +463,7 @@ contract UnisaveV2Router02 is IUnisaveV2Router02 {
         if (IUnisaveV2Factory(factory).getPair(tokenA, tokenB) == address(0)) {
             IUnisaveV2Factory(factory).createPair(tokenA, tokenB);
         }
-        (uint reserveA, uint reserveB, ) = UnisaveV2Library.getReserves(factory, tokenA, tokenB);
+        (uint reserveA, uint reserveB, ) = UnisaveV2Library.getReservesWithoutDummy(factory, tokenA, tokenB);
         if (reserveA == 0 && reserveB == 0) {
             (amountA, amountB) = (amountADesired, amountBDesired);
         } else {
