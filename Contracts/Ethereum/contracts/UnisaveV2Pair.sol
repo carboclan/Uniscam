@@ -24,7 +24,6 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     uint public deposited1;
     uint112 public dummy0;
     uint112 public dummy1;
-    uint public dummyLP;
 
     uint112 private reserve0;           // uses single storage slot, accessible via getReserves
     uint112 private reserve1;           // uses single storage slot, accessible via getReserves
@@ -168,32 +167,18 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
 
     // this low-level function should be called from a contract which performs important safety checks
     function dummy_mint(uint amount0, uint amount1) external onlyOwner() lock returns (uint liquidity) {
-        require(dummyLP == 0, 'dummyLP = 0');
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        uint _totalSupply = totalSupply; // gas savings
-        if (_totalSupply == 0) {
-            liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
-           _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
-        } else {
-            liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
-        }
-        require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
-        _mint(msg.sender, liquidity);
-        dummyLP = liquidity;
-        dummy0 = uint112(amount0);
-        dummy1 = uint112(amount1);
+        dummy0 = dummy0.add(amount0);
+        dummy1 = dummy1.add(amount1);
         _update(b0(), b1(), _reserve0, _reserve1);
         emit DummyMint(amount0, amount1);
     }
     
     // this low-level function should be called from a contract which performs important safety checks
-    function dummy_burn() external onlyOwner() lock {
-        require(dummyLP != 0, 'dummyLP != 0');        
+    function dummy_burn(uint amount0, uint amount1) external onlyOwner() lock {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        _burn(address(this), dummyLP);
-        dummy0 = 0;
-        dummy1 = 0;
-        dummyLP = 0;
+        dummy0 = dummy0.sub(dummy0);
+        dummy1 = dummy1.sub(dummy1);
         _update(b0(), b1(), _reserve0, _reserve1);
         emit DummyBurn();
     }    
