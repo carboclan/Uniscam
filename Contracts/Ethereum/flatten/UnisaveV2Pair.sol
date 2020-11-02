@@ -414,8 +414,6 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     function dummy_mint(uint amount0, uint amount1) external onlyOwner() lock returns (uint liquidity) {
         require(dummyLP == 0, 'dummyLP = 0');
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        uint balance0 = b0();
-        uint balance1 = b1();
         uint _totalSupply = totalSupply; // gas savings
         if (_totalSupply == 0) {
             liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
@@ -428,9 +426,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         dummyLP = liquidity;
         dummy0 = uint112(amount0);
         dummy1 = uint112(amount1);
-        _reserve0 += dummy0;
-        _reserve1 += dummy1;
-        _update(balance0, balance1, _reserve0, _reserve1);
+        _update(b0(), b1(), _reserve0, _reserve1);
         emit DummyMint(amount0, amount1);
     }
     
