@@ -40,11 +40,11 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         _;
         unlocked = 1;
     }
-    
+
     modifier onlyOwner() {
         require(owner() == msg.sender, "Ownable: caller is not the owner");
         _;
-    }       
+    }
 
     function owner() public view returns (address) {
         return IUnisaveV2Factory(factory).feeTo();
@@ -59,7 +59,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     function getDeposited() public view returns (uint _deposited0, uint _deposited1) {
         _deposited0 = deposited0;
         _deposited1 = deposited1;
-    }    
+    }
 
     function getDummy() public view returns (uint _dummy0, uint _dummy1) {
         _dummy0 = dummy0;
@@ -80,7 +80,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     event Mint(address indexed sender, uint amount0, uint amount1);
     event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
     event DummyMint(uint amount0, uint amount1);
-    event DummyBurn();    
+    event DummyBurn();
     event Swap(
         address indexed sender,
         uint amount0In,
@@ -150,7 +150,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         uint balance0 = b0().sub(dummy0);
         uint balance1 = b1().sub(dummy1);
         uint liquidity = balanceOf[address(this)];
-        
+
         uint _totalSupply = totalSupply; // gas savings
         amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
@@ -166,22 +166,22 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
-    function dummy_mint(uint amount0, uint amount1) external onlyOwner() lock returns (uint liquidity) {
+    function dummy_mint(uint amount0, uint amount1) external onlyOwner() lock {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        dummy0 = dummy0.add(amount0);
-        dummy1 = dummy1.add(amount1);
+        dummy0 += uint112(amount0);
+        dummy1 += uint112(amount1);
         _update(b0(), b1(), _reserve0, _reserve1);
         emit DummyMint(amount0, amount1);
     }
-    
+
     // this low-level function should be called from a contract which performs important safety checks
     function dummy_burn(uint amount0, uint amount1) external onlyOwner() lock {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        dummy0 = dummy0.sub(dummy0);
-        dummy1 = dummy1.sub(dummy1);
+        dummy0 -= uint112(amount0);
+        dummy1 -= uint112(amount1);
         _update(b0(), b1(), _reserve0, _reserve1);
         emit DummyBurn();
-    }    
+    }
 
     // this low-level function should be called from a contract which performs important safety checks
     function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
@@ -231,7 +231,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         fee = _fee;
     }
 
-    // vault    
+    // vault
     function b0() public view returns (uint b) {
         IERC20 u = IERC20(token0);
         b = u.balanceOf(address(this)).add(deposited0).add(dummy0);
@@ -253,7 +253,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         IERC20(token1).approve(yToken1, 0);
     }
     function setY0(address y) public onlyOwner() {
-        yToken0 = y; 
+        yToken0 = y;
         approve0();
     }
     function setY1(address y) public onlyOwner() {
@@ -269,7 +269,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         require(a > 0, "deposit amount must be greater than 0");
         IyToken y = IyToken(yToken1);
         y.deposit(a);
-    }    
+    }
     function depositAll0() onlyOwner() public {
         IERC20 u = IERC20(token0);
         deposit0(u.balanceOf(address(this)));
@@ -277,7 +277,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     function depositAll1() onlyOwner() public {
         IERC20 u = IERC20(token1);
         deposit1(u.balanceOf(address(this)));
-    }    
+    }
     function _withdraw0(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
         IERC20 u = IERC20(token0);
@@ -293,8 +293,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     }
     function _withdraw1(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
-        IERC20 u = IERC20(token1);        
-        uint delta = u.balanceOf(address(this));        
+        IERC20 u = IERC20(token1);
+        uint delta = u.balanceOf(address(this));
         IyToken y = IyToken(yToken1);
         y.withdraw(s);
         delta = u.balanceOf(address(this)).sub(delta);
@@ -303,10 +303,10 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         if (delta > 0) {
             _safeTransfer(token1, owner(), delta);
         }
-    }    
+    }
     function _withdrawAll0() internal {
         IERC20 y = IERC20(yToken0);
-        _withdraw0(y.balanceOf(address(this)));        
+        _withdraw0(y.balanceOf(address(this)));
     }
     function _withdrawAll1() internal {
         IERC20 y = IERC20(yToken1);
