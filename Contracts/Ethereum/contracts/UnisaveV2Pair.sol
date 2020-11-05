@@ -341,13 +341,10 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         IyToken y = IyToken(yToken0);
         y.withdraw(s);
         delta = u.balanceOf(address(this)).sub(delta);
-        delta = delta.sub(deposited0);
-        deposited0 = 0;
-        if (delta > 0) {
-            _safeTransfer(token0, owner(), delta);
-        }
+        deposited0 = deposited0.sub(delta);
+        _safeTransfer(token0, owner(), delta);
 
-        emit Deposit0Updated(0);
+        emit Deposit0Updated(deposited0);
     }
     function _withdraw1(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
@@ -356,13 +353,10 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         IyToken y = IyToken(yToken1);
         y.withdraw(s);
         delta = u.balanceOf(address(this)).sub(delta);
-        delta = delta.sub(deposited1);
-        deposited1 = 0;
-        if (delta > 0) {
-            _safeTransfer(token1, owner(), delta);
-        }
+        deposited1 = deposited1.sub(delta);
+        _safeTransfer(token1, owner(), delta);
 
-        emit Deposit1Updated(0);
+        emit Deposit1Updated(deposited1);
     }
     function _withdrawAll0() internal {
         IERC20 y = IERC20(yToken0);
