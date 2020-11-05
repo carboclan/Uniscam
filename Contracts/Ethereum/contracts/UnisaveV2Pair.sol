@@ -91,7 +91,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     event Mint(address indexed sender, uint amount0, uint amount1);
     event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
     event DummyMint(uint amount0, uint amount1);
-    event DummyBurn();
+    event DummyBurn(uint amount0, uint amount1);
     event Swap(
         address indexed sender,
         uint amount0In,
@@ -101,6 +101,17 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         address indexed to
     );
     event Sync(uint112 reserve0, uint112 reserve1);
+
+    event FeeUpdated(uint8 fee);
+
+    event Y0Updated(address indexed token);
+    event Y1Updated(address indexed token);
+
+    event Deposit0Updated(uint amount);
+    event Deposit1Updated(uint amount);
+
+    event RedepositRatio0Updated(uint16 redpositRatio);
+    event RedepositRatio1Updated(uint16 redpositRatio);
 
     constructor() public {
         factory = msg.sender;
@@ -191,7 +202,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         dummy0 -= uint112(amount0);
         dummy1 -= uint112(amount1);
         _update(b0(), b1(), _reserve0, _reserve1);
-        emit DummyBurn();
+        emit DummyBurn(amount0, amount1);
     }
 
     // this low-level function should be called from a contract which performs important safety checks
@@ -240,6 +251,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
 
     function setFee(uint8 _fee) external onlyOwner() {
         fee = _fee;
+
+        emit FeeUpdated(_fee);
     }
 
     // vault
@@ -266,10 +279,14 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     function setY0(address y) public onlyOwner() {
         yToken0 = y;
         approve0();
+
+        emit Y0Updated(y);
     }
     function setY1(address y) public onlyOwner() {
         yToken1 = y;
         approve1();
+
+        emit Y1Updated(y);
     }
 
     function deposit0(uint a) onlyOwner() public {
@@ -277,12 +294,16 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         IyToken y = IyToken(yToken0);
         deposited0 = a;
         y.deposit(a);
+
+        emit Deposit0Updated(a);
     }
     function deposit1(uint a) onlyOwner() public {
         require(a > 0, "deposit amount must be greater than 0");
         IyToken y = IyToken(yToken1);
         deposited1 = a;
         y.deposit(a);
+
+        emit Deposit1Updated(a);
     }
     function depositAll0() onlyOwner() public {
         IERC20 u = IERC20(token0);
@@ -298,15 +319,19 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     }
     function redeposit1() internal {
         IERC20 u = IERC20(token1);
-        deposit0(u.balanceOf(address(this)).mul(redepositRatio1).div(1000));
+        deposit1(u.balanceOf(address(this)).mul(redepositRatio1).div(1000));
     }
     function set_redepositRatio0(uint16 _redpositRatio0) onlyOwner() external {
         require(_redpositRatio0 <= 1000, "ratio too large");
         redepositRatio0 = _redpositRatio0;
+
+        emit RedepositRatio0Updated(_redpositRatio0);
     }
     function set_redepositRatio1(uint16 _redpositRatio1) onlyOwner() external {
-        require(_redpositRatio1 <= 1000, "ratio too large");        
+        require(_redpositRatio1 <= 1000, "ratio too large");
         redepositRatio1 = _redpositRatio1;
+
+        emit RedepositRatio1Updated(_redpositRatio1);
     }
 
     function _withdraw0(uint s) internal {
@@ -316,11 +341,10 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         IyToken y = IyToken(yToken0);
         y.withdraw(s);
         delta = u.balanceOf(address(this)).sub(delta);
-        delta = delta.sub(deposited0);
-        deposited0 = 0;
-        if (delta > 0) {
-            _safeTransfer(token0, owner(), delta);
-        }
+        deposited0 = deposited0.sub(delta);
+        _safeTransfer(token0, owner(), delta);
+
+        emit Deposit0Updated(deposited0);
     }
     function _withdraw1(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
@@ -329,11 +353,10 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         IyToken y = IyToken(yToken1);
         y.withdraw(s);
         delta = u.balanceOf(address(this)).sub(delta);
-        delta = delta.sub(deposited1);
-        deposited1 = 0;
-        if (delta > 0) {
-            _safeTransfer(token1, owner(), delta);
-        }
+        deposited1 = deposited1.sub(delta);
+        _safeTransfer(token1, owner(), delta);
+
+        emit Deposit1Updated(deposited1);
     }
     function _withdrawAll0() internal {
         IERC20 y = IERC20(yToken0);
