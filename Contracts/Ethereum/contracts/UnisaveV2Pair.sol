@@ -292,18 +292,18 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     function deposit0(uint a) onlyOwner() public {
         require(a > 0, "deposit amount must be greater than 0");
         IyToken y = IyToken(yToken0);
-        deposited0 = a;
+        deposited0 += a;
         y.deposit(a);
-
-        emit Deposit0Updated(a);
+    
+        emit Deposit0Updated(deposited0);
     }
     function deposit1(uint a) onlyOwner() public {
         require(a > 0, "deposit amount must be greater than 0");
         IyToken y = IyToken(yToken1);
-        deposited1 = a;
+        deposited1 += a;
         y.deposit(a);
-
-        emit Deposit1Updated(a);
+    
+        emit Deposit1Updated(deposited1);
     }
     function depositAll0() onlyOwner() public {
         IERC20 u = IERC20(token0);
@@ -333,7 +333,6 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
 
         emit RedepositRatio1Updated(_redpositRatio1);
     }
-
     function _withdraw0(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
         IERC20 u = IERC20(token0);
@@ -341,8 +340,12 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         IyToken y = IyToken(yToken0);
         y.withdraw(s);
         delta = u.balanceOf(address(this)).sub(delta);
-        deposited0 = deposited0.sub(delta);
-        _safeTransfer(token0, owner(), delta);
+        if (delta <= deposited0) {
+            deposited0 -= delta;
+        } else {
+            delta -= deposited0; deposited0 = 0;
+            _safeTransfer(token0, owner(), delta);
+        }
 
         emit Deposit0Updated(deposited0);
     }
@@ -353,8 +356,12 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         IyToken y = IyToken(yToken1);
         y.withdraw(s);
         delta = u.balanceOf(address(this)).sub(delta);
-        deposited1 = deposited1.sub(delta);
-        _safeTransfer(token1, owner(), delta);
+        if (delta <= deposited1) {
+            deposited1 -= delta;
+        } else {
+            delta -= deposited1; deposited1 = 0;
+            _safeTransfer(token1, owner(), delta);
+        }
 
         emit Deposit1Updated(deposited1);
     }
