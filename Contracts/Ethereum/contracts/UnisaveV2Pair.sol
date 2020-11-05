@@ -20,6 +20,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     address public token1;
     address public yToken0;
     address public yToken1;
+    uint16 redepositRatio0;
+    uint16 redepositRatio1;
     uint public deposited0;
     uint public deposited1;
     uint112 public dummy0;
@@ -70,8 +72,17 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         IERC20 u = IERC20(token);
         uint b = u.balanceOf(address(this));
         if (b < value) {
-            if (token == token0) _withdrawAll0();
-            else _withdrawAll1();
+            if (token == token0) {
+                _withdrawAll0();
+                if (redepositRatio0 > 0) {
+                    redeposit0();
+                }
+            } else {
+                _withdrawAll1();
+                if (redepositRatio1 > 0) {
+                    redeposit1();
+                }
+            }
         }
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))), 'UnisaveV2: TRANSFER_FAILED');
@@ -260,6 +271,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         yToken1 = y;
         approve1();
     }
+
     function deposit0(uint a) onlyOwner() public {
         require(a > 0, "deposit amount must be greater than 0");
         IyToken y = IyToken(yToken0);
@@ -280,6 +292,23 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         IERC20 u = IERC20(token1);
         deposit1(u.balanceOf(address(this)));
     }
+    function redeposit0() internal {
+        IERC20 u = IERC20(token0);
+        deposit0(u.balanceOf(address(this)).mul(redepositRatio0).div(1000));
+    }
+    function redeposit1() internal {
+        IERC20 u = IERC20(token1);
+        deposit0(u.balanceOf(address(this)).mul(redepositRatio1).div(1000));
+    }
+    function set_redepositRatio0(uint16 _redpositRatio0) onlyOwner() external {
+        require(_redpositRatio0 <= 1000, "ratio too large");
+        redepositRatio0 = _redpositRatio0;
+    }
+    function set_redepositRatio1(uint16 _redpositRatio1) onlyOwner() external {
+        require(_redpositRatio1 <= 1000, "ratio too large");        
+        redepositRatio1 = _redpositRatio1;
+    }
+
     function _withdraw0(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
         IERC20 u = IERC20(token0);

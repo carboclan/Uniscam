@@ -1,3 +1,47 @@
+// Dependency file: contracts/interfaces/IERC20.sol
+
+// pragma solidity =0.6.12;
+
+interface IERC20 {
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Transfer(address indexed from, address indexed to, uint value);
+
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
+    function decimals() external view returns (uint8);
+    function totalSupply() external view returns (uint);
+    function balanceOf(address owner) external view returns (uint);
+    function allowance(address owner, address spender) external view returns (uint);
+
+    function approve(address spender, uint value) external returns (bool);
+    function transfer(address to, uint value) external returns (bool);
+    function transferFrom(address from, address to, uint value) external returns (bool);
+}
+
+
+// Dependency file: contracts/interfaces/IUnisaveV2Factory.sol
+
+// pragma solidity =0.6.12;
+
+interface IUnisaveV2Factory {
+    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
+
+    function feeTo() external view returns (address);
+    function feeToSetter() external view returns (address);
+
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
+    function allPairs(uint) external view returns (address pair);
+    function allPairsLength() external view returns (uint);
+
+    function createPair(address tokenA, address tokenB) external returns (address pair);
+
+    function setFeeTo(address) external;
+    function setFeeToSetter(address) external;
+}
+
+
+// Root file: contracts/stragegies/fortube.sol
+
 /**
  *Submitted for verification at Bscscan.com on 2020-09-19
 */
@@ -14,8 +58,8 @@
 
 pragma solidity =0.6.12;
 
-import '../interfaces/IERC20.sol';
-import '../interfaces/IUnisaveV2Factory.sol';
+// import 'contracts/interfaces/IERC20.sol';
+// import 'contracts/interfaces/IUnisaveV2Factory.sol';
 
 library SafeMath {
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
