@@ -107,11 +107,11 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     event Y0Updated(address indexed token);
     event Y1Updated(address indexed token);
 
-    event Deposit0Updated(uint amount);
-    event Deposit1Updated(uint amount);
+    event Deposited0Updated(uint deposited);
+    event Deposited1Updated(uint deposited);
 
-    event RedepositRatio0Updated(uint16 redpositRatio);
-    event RedepositRatio1Updated(uint16 redpositRatio);
+    event RedepositRatio0Updated(uint16 ratio);
+    event RedepositRatio1Updated(uint16 ratio);
 
     constructor() public {
         factory = msg.sender;
@@ -295,7 +295,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         deposited0 += a;
         y.deposit(a);
     
-        emit Deposit0Updated(deposited0);
+        emit Deposited0Updated(deposited0);
     }
     function deposit1(uint a) onlyOwner() public {
         require(a > 0, "deposit amount must be greater than 0");
@@ -303,7 +303,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         deposited1 += a;
         y.deposit(a);
     
-        emit Deposit1Updated(deposited1);
+        emit Deposited1Updated(deposited1);
     }
     function depositAll0() onlyOwner() public {
         IERC20 u = IERC20(token0);
@@ -347,7 +347,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
             _safeTransfer(token0, owner(), delta);
         }
 
-        emit Deposit0Updated(deposited0);
+        emit Deposited0Updated(deposited0);
     }
     function _withdraw1(uint s) internal {
         require(s > 0, "withdraw amount must be greater than 0");
@@ -363,7 +363,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
             _safeTransfer(token1, owner(), delta);
         }
 
-        emit Deposit1Updated(deposited1);
+        emit Deposited1Updated(deposited1);
     }
     function _withdrawAll0() internal {
         IERC20 y = IERC20(yToken0);
