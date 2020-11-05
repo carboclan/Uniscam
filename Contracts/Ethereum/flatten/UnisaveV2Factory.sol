@@ -523,37 +523,39 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     function setY0(address y) public onlyOwner() {
         yToken0 = y;
         approve0();
-
         emit Y0Updated(y);
     }
     function setY1(address y) public onlyOwner() {
         yToken1 = y;
         approve1();
-
         emit Y1Updated(y);
     }
 
-    function deposit0(uint a) onlyOwner() public {
+    function deposit0(uint a) internal {
         require(a > 0, "deposit amount must be greater than 0");
         IyToken y = IyToken(yToken0);
         deposited0 += a;
-        y.deposit(a);
-    
+        y.deposit(a);    
         emit Deposited0Updated(deposited0);
     }
-    function deposit1(uint a) onlyOwner() public {
+    function deposit1(uint a) internal {
         require(a > 0, "deposit amount must be greater than 0");
         IyToken y = IyToken(yToken1);
         deposited1 += a;
         y.deposit(a);
-    
         emit Deposited1Updated(deposited1);
     }
-    function depositAll0() onlyOwner() public {
+    function depositSome0(uint a) onlyOwner() external {
+        deposit0(a);
+    }
+    function depositSome1(uint a) onlyOwner() external {
+        deposit1(a);
+    }
+    function depositAll0() onlyOwner() external {
         IERC20 u = IERC20(token0);
         deposit0(u.balanceOf(address(this)));
     }
-    function depositAll1() onlyOwner() public {
+    function depositAll1() onlyOwner() external {
         IERC20 u = IERC20(token1);
         deposit1(u.balanceOf(address(this)));
     }
