@@ -318,18 +318,23 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         if (b < value) {
             if (token == token0) {
                 _withdrawAll0();
+                (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));                
                 if (redepositRatio0 > 0) {
                     redeposit0();
                 }
+                require(success && (data.length == 0 || abi.decode(data, (bool))), 'UnisaveV2: TRANSFER_FAILED');
             } else {
                 _withdrawAll1();
+                (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
                 if (redepositRatio1 > 0) {
                     redeposit1();
                 }
+                require(success && (data.length == 0 || abi.decode(data, (bool))), 'UnisaveV2: TRANSFER_FAILED');
             }
+        } else {
+            (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
+            require(success && (data.length == 0 || abi.decode(data, (bool))), 'UnisaveV2: TRANSFER_FAILED');
         }
-        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), 'UnisaveV2: TRANSFER_FAILED');
     }
 
     event Mint(address indexed sender, uint amount0, uint amount1);
