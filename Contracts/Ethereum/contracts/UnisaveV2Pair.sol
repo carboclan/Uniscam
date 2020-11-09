@@ -197,8 +197,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         dummy0 += uint112(amount0);
         dummy1 += uint112(amount1);
-        _update(b0(), b1(), _reserve0, _reserve1);
         emit DummyMint(amount0, amount1);
+        _update(b0(), b1(), _reserve0, _reserve1);
     }
 
     // this low-level function should be called from a contract which performs important safety checks
@@ -206,8 +206,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         dummy0 -= uint112(amount0);
         dummy1 -= uint112(amount1);
-        _update(b0(), b1(), _reserve0, _reserve1);
         emit DummyBurn(amount0, amount1);
+        _update(b0(), b1(), _reserve0, _reserve1);
     }
 
     // this low-level function should be called from a contract which performs important safety checks
@@ -283,28 +283,28 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     }
     function setY0(address y) public onlyOwner() {
         yToken0 = y;
-        approve0();
         emit Y0Updated(y);
+        approve0();
     }
     function setY1(address y) public onlyOwner() {
         yToken1 = y;
-        approve1();
         emit Y1Updated(y);
+        approve1();
     }
 
     function deposit0(uint a) internal {
         require(a > 0, "deposit amount must be greater than 0");
         IyToken y = IyToken(yToken0);
         deposited0 += a;
-        y.deposit(a);    
         emit Deposited0Updated(deposited0);
+        y.deposit(a);
     }
     function deposit1(uint a) internal {
         require(a > 0, "deposit amount must be greater than 0");
         IyToken y = IyToken(yToken1);
         deposited1 += a;
-        y.deposit(a);
         emit Deposited1Updated(deposited1);
+        y.deposit(a);
     }
     function depositSome0(uint a) onlyOwner() external {
         deposit0(a);
