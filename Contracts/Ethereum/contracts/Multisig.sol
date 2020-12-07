@@ -15,12 +15,20 @@ interface IUnisavePair {
     function depositSome0(uint) external;
     function depositSome1(uint) external;
     function setY0(address) external;
-    function setY1(address) external;        
+    function setY1(address) external;
+    function token0() external view returns (address);
+    function token1() external view returns (address);            
+}
+
+interface IUnisaveFactory {
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
 }
 
 contract MultiSigWalletWithTimelock {
 
     uint256 constant public MAX_OWNER_COUNT = 50;
+    uint256 constant public unisave_factory = address(0x32CE36F6eA8d97f9fC19Aab83b9c6D2F52D74470);
+
     uint256 public lockSeconds = 60;
 
     event Confirmation(address indexed sender, uint256 indexed transactionId);
@@ -455,13 +463,13 @@ contract MultiSigWalletWithTimelock {
     mapping (address => bool) public whiteListVault;   
     
     modifier onlyWhiteListVault(address vault) {
-        if (!whiteListVault[vault])
-            revert("OWNER_EXISTS_ERROR");
+        require(whiteListVault[vault], 'only whitelist vault');
         _;
     }
     
     modifier onlyUnisavePair(address pair) {
-        // TODO 
+        address token0 = IUnisavePair(pair).token0(), token1 = IUnisavePair(pair).token1();        
+        require(IUnisaveFactory(unisave_factory).getPair(token0, token1) == pair, "only unisave pair"));
         _;
     }
     
