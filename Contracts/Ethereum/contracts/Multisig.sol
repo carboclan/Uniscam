@@ -27,7 +27,7 @@ interface IUnisaveFactory {
 contract MultiSigWalletWithTimelock {
 
     uint256 constant public MAX_OWNER_COUNT = 50;
-    uint256 constant public unisave_factory = address(0x32CE36F6eA8d97f9fC19Aab83b9c6D2F52D74470);
+    address constant public unisave_factory = address(0x32CE36F6eA8d97f9fC19Aab83b9c6D2F52D74470);
 
     uint256 public lockSeconds = 60;
 
@@ -468,8 +468,9 @@ contract MultiSigWalletWithTimelock {
     }
     
     modifier onlyUnisavePair(address pair) {
-        address token0 = IUnisavePair(pair).token0(), token1 = IUnisavePair(pair).token1();        
-        require(IUnisaveFactory(unisave_factory).getPair(token0, token1) == pair, "only unisave pair"));
+        address token0 = IUnisavePair(pair).token0();
+        address token1 = IUnisavePair(pair).token1();
+        require(IUnisaveFactory(unisave_factory).getPair(token0, token1) == pair, "only unisave pair");
         _;
     }
     
