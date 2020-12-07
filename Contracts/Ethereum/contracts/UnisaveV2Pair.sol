@@ -33,7 +33,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
 
     uint public price0CumulativeLast;
     uint public price1CumulativeLast;
-    uint8 public fee = 3;
+    uint16 public fee = 30;
 
     uint private unlocked = 1;
     modifier lock() {
@@ -232,9 +232,9 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
         require(amount0In > 0 || amount1In > 0, 'UnisaveV2: INSUFFICIENT_INPUT_AMOUNT');
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
-        uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(fee));
-        uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(fee));
-        require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UnisaveV2: K');
+        uint balance0Adjusted = balance0.mul(10000).sub(amount0In.mul(fee));
+        uint balance1Adjusted = balance1.mul(10000).sub(amount1In.mul(fee));
+        require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(10000**2), 'UnisaveV2: K');
         }
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -254,7 +254,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         _update(b0(), b1(), reserve0, reserve1);
     }
 
-    function setFee(uint8 _fee) external onlyOwner() {
+    function setFee(uint16 _fee) external onlyOwner() {
         fee = _fee;
 
         emit FeeUpdated(_fee);
