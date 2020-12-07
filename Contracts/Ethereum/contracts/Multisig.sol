@@ -16,8 +16,9 @@ interface IUnisavePair {
     function depositSome1(uint) external;
     function setY0(address) external;
     function setY1(address) external;
+    function setFee(uint16) external;    
     function token0() external view returns (address);
-    function token1() external view returns (address);            
+    function token1() external view returns (address);           
 }
 
 interface IUnisaveFactory {
@@ -474,24 +475,27 @@ contract MultiSigWalletWithTimelock {
         _;
     }
     
-    function depositAll0(address pair) external ownerExists(msg.sender) {
+    function depositAll0(address pair) external ownerExists(msg.sender) onlyUnisavePair(pair) {
         IUnisavePair(pair).depositAll0();
     }
-    function depositAll1(address pair) external ownerExists(msg.sender) {
+    function depositAll1(address pair) external ownerExists(msg.sender) onlyUnisavePair(pair) {
         IUnisavePair(pair).depositAll1();        
     }
-    function depositSome0(address pair, uint amount) external ownerExists(msg.sender) {
+    function depositSome0(address pair, uint amount) external ownerExists(msg.sender) onlyUnisavePair(pair) {
         IUnisavePair(pair).depositSome0(amount);
     }
-    function depositSome1(address pair, uint amount) external ownerExists(msg.sender) {
+    function depositSome1(address pair, uint amount) external ownerExists(msg.sender) onlyUnisavePair(pair) {
         IUnisavePair(pair).depositSome1(amount);        
     }
-    function setY0(address pair, address vault) external ownerExists(msg.sender) onlyWhiteListVault(vault) {
+    function setY0(address pair, address vault) external ownerExists(msg.sender) onlyWhiteListVault(vault) onlyUnisavePair(pair) {
         IUnisavePair(pair).setY0(vault);     
     }
-    function setY1(address pair, address vault) external ownerExists(msg.sender) onlyWhiteListVault(vault) {
+    function setY1(address pair, address vault) external ownerExists(msg.sender) onlyWhiteListVault(vault) onlyUnisavePair(pair) {
         IUnisavePair(pair).setY1(vault);     
     }
+    function setFee(address pair, uint16 _fee) external ownerExists(msg.sender) onlyUnisavePair(pair) {
+        IUnisavePair(pair).setFee(_fee);     
+    }    
     function addWhiteListVault(address vault) external onlyWallet {
         whiteListVault[vault] = true;
     }
