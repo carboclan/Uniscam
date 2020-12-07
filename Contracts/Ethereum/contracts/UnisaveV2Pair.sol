@@ -13,7 +13,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     using UQ112x112 for uint224;
 
     uint public constant MINIMUM_LIQUIDITY = 10**3;
-    bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
+    bytes4 private constant SELECTOR_APPROVE = 0x095ea7b3;
+    bytes4 private constant SELECTOR_TRANSFER = 0xa9059cbb; 
 
     address public factory;
     address public token0;
@@ -68,27 +69,35 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         _dummy1 = dummy1;
     }
 
+    function _safeApprove(address token, address spender, uint256 value) internal {
+        require((value == 0) || (token.allowance(address(this), spender) == 0),
+            "SafeERC20: approve from non-zero to non-zero allowance"
+        );        
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR_APPROVE, to, value));
+        require(success && (data.length == 0 || abi.decode(data, (bool))), 'SAFE_APPROVE_FAILED');
+    }
+
     function _safeTransfer(address token, address to, uint value) private {
         IERC20 u = IERC20(token);
         uint b = u.balanceOf(address(this));
         if (b < value) {
             if (token == token0) {
                 _withdrawAll0();
-                (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));                
+                (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR_TRANSFER, to, value));             
                 if (redepositRatio0 > 0) {
                     redeposit0();
                 }
                 require(success && (data.length == 0 || abi.decode(data, (bool))), 'UnisaveV2: TRANSFER_FAILED');
             } else {
                 _withdrawAll1();
-                (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
+                (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR_TRANSFER, to, value));   
                 if (redepositRatio1 > 0) {
                     redeposit1();
                 }
                 require(success && (data.length == 0 || abi.decode(data, (bool))), 'UnisaveV2: TRANSFER_FAILED');
             }
         } else {
-            (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
+            (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR_TRANSFER, to, value));   
             require(success && (data.length == 0 || abi.decode(data, (bool))), 'UnisaveV2: TRANSFER_FAILED');
         }
     }
@@ -107,7 +116,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     );
     event Sync(uint112 reserve0, uint112 reserve1);
 
-    event FeeUpdated(uint8 fee);
+    event FeeUpdated(uint16 fee);
 
     event Y0Updated(address indexed token);
     event Y1Updated(address indexed token);
@@ -260,30 +269,6 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         emit FeeUpdated(_fee);
     }
 
-    function _safeApprove(address token, address spender, uint256 value) private {
-        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, spender, value));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), 'SAFE_APPROVE_FAILED');
-    }
-
-    // openzeppelin SafeERC20
-    /**
-     * @dev Deprecated. This function has issues similar to the ones found in
-     * {IERC20-approve}, and its usage is discouraged.
-     *
-     * Whenever possible, use {safeIncreaseAllowance} and
-     * {safeDecreaseAllowance} instead.
-     */
-    function safeApprove(IERC20 token, address spender, uint256 value) internal {
-        // safeApprove should only be called when setting an initial allowance,
-        // or when resetting it to zero. To increase and decrease it, use
-        // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
-        // solhint-disable-next-line max-line-length
-        require((value == 0) || (token.allowance(address(this), spender) == 0),
-            "SafeERC20: approve from non-zero to non-zero allowance"
-        );
-        _safeApprove(address(token), spender, value);
-    }
-
     // vault
     function b0() public view returns (uint b) {
         IERC20 u = IERC20(token0);
@@ -294,16 +279,17 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         b = u.balanceOf(address(this)).add(deposited1).add(dummy1);
     }
     function approve0() public onlyOwner() {
-        IERC20(token0).approve(yToken0, uint(-1));
+        _safeApprove(token0, yToken0, uint(-1));
     }
     function approve1() public onlyOwner() {
-        IERC20(token1).approve(yToken1, uint(-1));
+        _safeApprove(token1, yToken1, uint(-1));
+
     }
     function unapprove0() public onlyOwner() {
-        IERC20(token0).approve(yToken0, 0);
+        _safeApprove(token0, yToken0, 0);
     }
     function unapprove1() public onlyOwner() {
-        IERC20(token1).approve(yToken1, 0);
+        _safeApprove(token1, yToken1, 0);
     }
     function setY0(address y) public onlyOwner() {
         yToken0 = y;
