@@ -69,11 +69,8 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         _dummy1 = dummy1;
     }
 
-    function _safeApprove(address token, address spender, uint256 value) internal {
-        require((value == 0) || (token.allowance(address(this), spender) == 0),
-            "SafeERC20: approve from non-zero to non-zero allowance"
-        );        
-        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR_APPROVE, to, value));
+    function _safeApprove(address token, address spender, uint value) private {
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR_APPROVE, spender, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))), 'SAFE_APPROVE_FAILED');
     }
 
