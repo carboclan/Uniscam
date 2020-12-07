@@ -260,6 +260,30 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         emit FeeUpdated(_fee);
     }
 
+    function _safeApprove(address token, address spender, uint256 value) private {
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, spender, value));
+        require(success && (data.length == 0 || abi.decode(data, (bool))), 'SAFE_APPROVE_FAILED');
+    }
+
+    // openzeppelin SafeERC20
+    /**
+     * @dev Deprecated. This function has issues similar to the ones found in
+     * {IERC20-approve}, and its usage is discouraged.
+     *
+     * Whenever possible, use {safeIncreaseAllowance} and
+     * {safeDecreaseAllowance} instead.
+     */
+    function safeApprove(IERC20 token, address spender, uint256 value) internal {
+        // safeApprove should only be called when setting an initial allowance,
+        // or when resetting it to zero. To increase and decrease it, use
+        // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
+        // solhint-disable-next-line max-line-length
+        require((value == 0) || (token.allowance(address(this), spender) == 0),
+            "SafeERC20: approve from non-zero to non-zero allowance"
+        );
+        _safeApprove(address(token), spender, value);
+    }
+
     // vault
     function b0() public view returns (uint b) {
         IERC20 u = IERC20(token0);
