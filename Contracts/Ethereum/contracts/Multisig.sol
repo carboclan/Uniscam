@@ -137,10 +137,19 @@ contract MultiSigWalletWithTimelock {
         public
         validRequirement(_owners.length, _required)
     {
-        
-        whiteListVault[0x1F19D041FDCE1B70901008229d77A8B02E315618] = true;
-        whiteListVault[0xeB3C085FBc1030bb127114CB1A3B9A02A24eF62d] = true;
-        
+
+        // YFII https://github.com/yfii/yvault/blob/master/contracts/standard/v2/bscconfig.json
+        whiteListVault[0x1F19D041FDCE1B70901008229d77A8B02E315618] = true; // iUSDT
+        whiteListVault[0xeB3C085FBc1030bb127114CB1A3B9A02A24eF62d] = true; // iBUSD
+        whiteListVault[0x72dd5Df626ebBc020fdF431502799413c56Ac12C] = true; // iBNB
+        whiteListVault[0xb98f8339CD3CD50701aCdE307875B78c373e6515] = true; // iETH        
+
+        // dForce
+        whiteListVault[0x03eFf545083D98063EDB933BF03D69c5D22409C3] = true; // dDAI
+        whiteListVault[0xb2Dd446176cd19a754A936cdc124CD85Fb6d668e] = true; // dUSDT
+        whiteListVault[0x5C90308849e666274ae6B0C9759E278Aa0d1b4Fc] = true; // dUSDC
+        whiteListVault[0x96328E0ca47175eBB45D94df6fEd2B0Cb19CB16B] = true; // dBUSD        
+
         for (uint256 i = 0; i < _owners.length; i++) {
             if (isOwner[_owners[i]] || _owners[i] == address(0)) {
                 revert("OWNER_ERROR");
