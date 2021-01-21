@@ -35,6 +35,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     uint public price0CumulativeLast;
     uint public price1CumulativeLast;
     uint16 public fee = 30;
+    mapping(address => uint16) public fees;
 
     uint private unlocked = 1;
     modifier lock() {
@@ -113,7 +114,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
     );
     event Sync(uint112 reserve0, uint112 reserve1);
 
-    event FeeUpdated(uint16 fee);
+    event FeeUpdated(address account, uint16 fee);
 
     event Y0Updated(address indexed token);
     event Y1Updated(address indexed token);
@@ -238,8 +239,9 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
         require(amount0In > 0 || amount1In > 0, 'UnisaveV2: INSUFFICIENT_INPUT_AMOUNT');
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
-        uint balance0Adjusted = balance0.mul(10000).sub(amount0In.mul(fee));
-        uint balance1Adjusted = balance1.mul(10000).sub(amount1In.mul(fee));
+        uint16 userFee = fees[msg.sender];
+        uint balance0Adjusted = balance0.mul(10000).sub(amount0In.mul(userFee));
+        uint balance1Adjusted = balance1.mul(10000).sub(amount1In.mul(userFee));
         require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(10000**2), 'UnisaveV2: K');
         }
 
@@ -260,10 +262,17 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         _update(b0(), b1(), reserve0, reserve1);
     }
 
-    function setFee(uint16 _fee) external onlyOwner() {
-        fee = _fee;
+    function setFee(address account, uint16 _fee) external onlyOwner() {
+        fees[account] = _fee;
 
-        emit FeeUpdated(_fee);
+        emit FeeUpdated(account, _fee);
+    }
+
+    function getFee(address account) public view returns (uint16 _fee) {
+        if (fees[account] > 0) {
+            return fees[account];
+        }
+        return fee;
     }
 
     // vault
