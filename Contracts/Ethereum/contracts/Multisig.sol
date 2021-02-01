@@ -16,8 +16,9 @@ interface IUnisavePair {
     function depositSome1(uint) external;
     function setY0(address) external;
     function setY1(address) external;
+    function setFee(uint16) external;    
     function token0() external view returns (address);
-    function token1() external view returns (address);            
+    function token1() external view returns (address);           
 }
 
 interface IUnisaveFactory {
@@ -136,10 +137,19 @@ contract MultiSigWalletWithTimelock {
         public
         validRequirement(_owners.length, _required)
     {
-        
-        whiteListVault[0x1F19D041FDCE1B70901008229d77A8B02E315618] = true;
-        whiteListVault[0xeB3C085FBc1030bb127114CB1A3B9A02A24eF62d] = true;
-        
+
+        // YFII https://github.com/yfii/yvault/blob/master/contracts/standard/v2/bscconfig.json
+        whiteListVault[0x1F19D041FDCE1B70901008229d77A8B02E315618] = true; // iUSDT
+        whiteListVault[0xeB3C085FBc1030bb127114CB1A3B9A02A24eF62d] = true; // iBUSD
+        whiteListVault[0x72dd5Df626ebBc020fdF431502799413c56Ac12C] = true; // iBNB
+        whiteListVault[0xb98f8339CD3CD50701aCdE307875B78c373e6515] = true; // iETH        
+
+        // dForce
+        whiteListVault[0x03eFf545083D98063EDB933BF03D69c5D22409C3] = true; // dDAI
+        whiteListVault[0xb2Dd446176cd19a754A936cdc124CD85Fb6d668e] = true; // dUSDT
+        whiteListVault[0x5C90308849e666274ae6B0C9759E278Aa0d1b4Fc] = true; // dUSDC
+        whiteListVault[0x96328E0ca47175eBB45D94df6fEd2B0Cb19CB16B] = true; // dBUSD        
+
         for (uint256 i = 0; i < _owners.length; i++) {
             if (isOwner[_owners[i]] || _owners[i] == address(0)) {
                 revert("OWNER_ERROR");
@@ -474,24 +484,27 @@ contract MultiSigWalletWithTimelock {
         _;
     }
     
-    function depositAll0(address pair) external ownerExists(msg.sender) {
+    function depositAll0(address pair) external ownerExists(msg.sender) onlyUnisavePair(pair) {
         IUnisavePair(pair).depositAll0();
     }
-    function depositAll1(address pair) external ownerExists(msg.sender) {
+    function depositAll1(address pair) external ownerExists(msg.sender) onlyUnisavePair(pair) {
         IUnisavePair(pair).depositAll1();        
     }
-    function depositSome0(address pair, uint amount) external ownerExists(msg.sender) {
+    function depositSome0(address pair, uint amount) external ownerExists(msg.sender) onlyUnisavePair(pair) {
         IUnisavePair(pair).depositSome0(amount);
     }
-    function depositSome1(address pair, uint amount) external ownerExists(msg.sender) {
+    function depositSome1(address pair, uint amount) external ownerExists(msg.sender) onlyUnisavePair(pair) {
         IUnisavePair(pair).depositSome1(amount);        
     }
-    function setY0(address pair, address vault) external ownerExists(msg.sender) onlyWhiteListVault(vault) {
+    function setY0(address pair, address vault) external ownerExists(msg.sender) onlyWhiteListVault(vault) onlyUnisavePair(pair) {
         IUnisavePair(pair).setY0(vault);     
     }
-    function setY1(address pair, address vault) external ownerExists(msg.sender) onlyWhiteListVault(vault) {
+    function setY1(address pair, address vault) external ownerExists(msg.sender) onlyWhiteListVault(vault) onlyUnisavePair(pair) {
         IUnisavePair(pair).setY1(vault);     
     }
+    function setFee(address pair, uint16 _fee) external ownerExists(msg.sender) onlyUnisavePair(pair) {
+        IUnisavePair(pair).setFee(_fee);     
+    }    
     function addWhiteListVault(address vault) external onlyWallet {
         whiteListVault[vault] = true;
     }
