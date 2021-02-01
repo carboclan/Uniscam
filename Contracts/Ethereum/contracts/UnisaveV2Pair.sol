@@ -239,7 +239,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
         uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
         require(amount0In > 0 || amount1In > 0, 'UnisaveV2: INSUFFICIENT_INPUT_AMOUNT');
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
-        uint16 userFee = fees[msg.sender];
+        uint16 userFee = getFee(msg.sender);
         uint balance0Adjusted = balance0.mul(10000).sub(amount0In.mul(userFee));
         uint balance1Adjusted = balance1.mul(10000).sub(amount1In.mul(userFee));
         require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(10000**2), 'UnisaveV2: K');
