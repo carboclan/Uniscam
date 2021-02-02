@@ -43,7 +43,7 @@ interface IUnisaveV2Pair {
     function price0CumulativeLast() external view returns (uint);
     function price1CumulativeLast() external view returns (uint);
     function kLast() external view returns (uint);
-    function fee() external view returns (uint8);
+    function getFee(address) external view returns (uint16);
 
     function mint(address to) external returns (uint liquidity);
     function burn(address to) external returns (uint amount0, uint amount1);

@@ -34,7 +34,7 @@ contract UnisaveV2Pair is UnisaveV2ERC20 {
 
     uint public price0CumulativeLast;
     uint public price1CumulativeLast;
-    uint16 public fee = 30;
+    uint16 private fee = 30;
     mapping(address => uint16) public fees;
 
     uint private unlocked = 1;
