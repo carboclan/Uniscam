@@ -323,7 +323,7 @@ contract UnisaveV2Router02 is IUnisaveV2Router02 {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = UnisaveV2Library.sortTokens(input, output);
             IUnisaveV2Pair pair = IUnisaveV2Pair(UnisaveV2Library.pairFor(factory, input, output));
-            uint8 fee = pair.fee();  
+            uint8 fee = pair.getFee(msg.sender);  
             (uint reserve0, uint reserve1,) = pair.getReserves();
             uint amount0Out;
             uint amount1Out;

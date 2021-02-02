@@ -33,7 +33,7 @@ library UnisaveV2Library {
         (uint dummy0, uint dummy1) = pair.getDummy();
         reserve0 -= dummy0; reserve1 -= dummy1;     
         (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
-        fee = pair.fee();
+        fee = pair.getFee(msg.sender);
     }    
 
     // fetches and sorts the reserves and fee for a pair
@@ -41,7 +41,7 @@ library UnisaveV2Library {
         (address token0,) = sortTokens(tokenA, tokenB);
         (uint reserve0, uint reserve1,) = IUnisaveV2Pair(pairFor(factory, tokenA, tokenB)).getReserves();
         (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
-        fee = IUnisaveV2Pair(pairFor(factory, tokenA, tokenB)).fee();
+        fee = IUnisaveV2Pair(pairFor(factory, tokenA, tokenB)).getFee(msg.sender);
     }
 
     // given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
