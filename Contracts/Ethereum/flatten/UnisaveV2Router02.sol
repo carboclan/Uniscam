@@ -45,7 +45,7 @@ interface IUnisaveV2Pair {
     function price0CumulativeLast() external view returns (uint);
     function price1CumulativeLast() external view returns (uint);
     function kLast() external view returns (uint);
-    function fee() external view returns (uint8);
+    function getFee(address) external view returns (uint16);
 
     function mint(address to) external returns (uint liquidity);
     function burn(address to) external returns (uint amount0, uint amount1);
@@ -126,7 +126,7 @@ library UnisaveV2Library {
         (uint dummy0, uint dummy1) = pair.getDummy();
         reserve0 -= dummy0; reserve1 -= dummy1;     
         (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
-        fee = pair.fee();
+        fee = pair.getFee(msg.sender);
     }    
 
     // fetches and sorts the reserves and fee for a pair
@@ -134,7 +134,7 @@ library UnisaveV2Library {
         (address token0,) = sortTokens(tokenA, tokenB);
         (uint reserve0, uint reserve1,) = IUnisaveV2Pair(pairFor(factory, tokenA, tokenB)).getReserves();
         (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
-        fee = IUnisaveV2Pair(pairFor(factory, tokenA, tokenB)).fee();
+        fee = IUnisaveV2Pair(pairFor(factory, tokenA, tokenB)).getFee(msg.sender);
     }
 
     // given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
@@ -744,7 +744,7 @@ contract UnisaveV2Router02 is IUnisaveV2Router02 {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = UnisaveV2Library.sortTokens(input, output);
             IUnisaveV2Pair pair = IUnisaveV2Pair(UnisaveV2Library.pairFor(factory, input, output));
-            uint8 fee = pair.fee();  
+            uint8 fee = pair.getFee(msg.sender);  
             (uint reserve0, uint reserve1,) = pair.getReserves();
             uint amount0Out;
             uint amount1Out;
