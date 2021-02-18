@@ -7,7 +7,12 @@
     width: 200vw;
     height: 150vh;
     transform: scaleY(0);
-    background-image: linear-gradient(0deg, transparent 24%, rgba(34, 59, 170, 0.5) 25%, rgba(63, 74, 165, 0.9) 26%, transparent 27%, transparent 74%, rgba(34, 59, 170, 0.5) 75%, rgba(63, 74, 165, 0.9) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(34, 59, 170, 0.75) 25%, rgba(0, 6, 59, 0.25) 26%, transparent 27%, transparent 74%, rgba(34, 59, 170, 0.75) 75%, rgba(0, 6, 59, 0.25) 76%, transparent 77%, transparent);
+    background-image: linear-gradient(
+        0deg, transparent 24%, rgb(188, 100, 95) 25%, #CF615E 26%, transparent 27%, transparent 74%, #CF615E 75%, #CF615E 76%, transparent 77%, transparent
+        ), 
+        linear-gradient(
+            90deg, transparent 24%, rgba(188, 100, 95, 0.75) 25%, rgba(0, 6, 59, 0.25) 26%, transparent 27%, transparent 74%, #CF615E 75%, #CF615E 76%, transparent 77%, transparent
+            );
     background-size: 50px 50px;
     z-index: -99;
 }

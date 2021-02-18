@@ -55,6 +55,10 @@ const Marginer = styled.div`
   margin-top: 5rem;
 `
 
+const GridWrapper = styled.div`
+  z-index: -99;
+`
+
 export default function App() {
   return (
     <Suspense fallback={null}>
@@ -84,9 +88,9 @@ export default function App() {
               </Switch>
             </Web3ReactManager>
             <Marginer />
-            <div className="grid-wrapper no-overflow">
+            <GridWrapper className="no-overflow">
               <div className="m-grid is-animating"></div>
-            </div>
+            </GridWrapper>
           </BodyWrapper>
         </AppWrapper>
       </HashRouter>
